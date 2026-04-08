@@ -46,7 +46,7 @@
         
         \bigskip
         
-        \Large\textbf{``What would have happened without this data point\thinspace?''}
+        \Large\textbf{``Can we quantify the \remph{influence} of a single data point\thinspace?''}
     \end{center}
     \vfill
 \end{frame}
@@ -54,7 +54,7 @@
 % Application slides
 \begin{frame}{Application: Model Interpretability}
     \begin{center}
-        \includegraphics[height=0.65\textheight]{figures/app_interpretability.png}
+        \includegraphics[height=0.65\textheight]{figures/app_interpretability.pdf}
     \end{center}
     \vspace{-0.3cm}
     \begin{center}
@@ -71,7 +71,7 @@
 
 \begin{frame}{Application: Data Poisoning Attacks}
     \begin{center}
-        \includegraphics[height=0.55\textheight]{figures/app_poisoning.png}
+        \includegraphics[height=0.55\textheight]{figures/app_poisoning.pdf}
     \end{center}
     \vspace{-0.3cm}
     \begin{center}
@@ -90,7 +90,7 @@
 
 \begin{frame}{Application: Fixing Mislabeled Data}
     \begin{center}
-        \includegraphics[height=0.55\textheight]{figures/app_mislabeled.png}
+        \includegraphics[height=0.55\textheight]{figures/app_mislabeled.pdf}
     \end{center}
     \vspace{-0.3cm}
     \begin{center}
@@ -108,7 +108,7 @@
 
 \begin{frame}{Application: Understanding LLM Generalization}
     \begin{center}
-        \includegraphics[height=0.7\textheight]{figures/app_llm_influence.png}
+        \includegraphics[height=0.7\textheight]{figures/app_llm_influence.pdf}
     \end{center}
     \vspace{-0.3cm}
     \begin{center}
@@ -125,7 +125,7 @@
 % This demonstrates that LLMs generalize abstractly from training data, not via memorization.
 
 % Slide 2: Motivation
-\begin{frame}{Motivation: The ``Leave-One-Out" Problem}
+\begin{frame}{From Intuition to Formalization}
     \textbf{Core Question:} How does \remph{a single training data point} affect our model's predictions?
     
     \pause
@@ -170,7 +170,7 @@
     Instead of retraining to find $\hat{\theta}_{\epsilon, z}$, we can approximate it using a first order Taylor expansion around $\hat{\theta}$.
     
     \vspace{0.5cm}
-    Assuming the empirical risk is strictly convex and twice differentiable, we rely on the Hessian matrix $H_{\hat{\theta}}$:
+    Assuming the empirical risk is \emph{strictly convex} and \emph{twice differentiable}, we rely on the Hessian matrix $H_{\hat{\theta}}$:
     \begin{equation}
         H_{\hat{\theta}} = \frac{1}{n} \sum_{i=1}^{n} \nabla_{\theta}^2 L(z_i, \hat{\theta})
     \end{equation}
@@ -180,6 +180,75 @@
     \begin{equation}
         \mathcal{I}_{\text{up, params}}(z) = \left. \frac{d\hat{\theta}_{\epsilon, z}}{d\epsilon} \right|_{\epsilon=0} = -H_{\hat{\theta}}^{-1} \nabla_{\theta} L(z, \hat{\theta})
     \end{equation}
+\end{frame}
+
+\begin{frame}{Visualizing the Influence Function (1D)}
+    \begin{center}
+    \begin{tikzpicture}[scale=0.9, >=stealth]
+        % Axes
+        \draw[->] (-0.5, 0) -- (8.5, 0) node[right] {$\theta$};
+        \draw[->] (0, -0.3) -- (0, 5.5) node[above] {Loss};
+
+        % Original empirical risk: R(theta) with minimum at theta=4
+        \draw[thick, blue!70!black, domain=0.5:7.8, smooth, samples=80]
+            plot (\x, {0.18*(\x-4)^2 + 0.8})
+            node[right, blue!70!black] {};
+        \node[blue!70!black, above right] at (7, 3.5) {$\frac{1}{n}\sum_i L(z_i, \theta)$};
+
+        % Upweighted risk: R(theta) + epsilon * L(z, theta), shifted minimum to ~3.0
+        \draw[thick, red!70!black, domain=0.5:7.8, smooth, samples=80]
+            plot (\x, {0.22*(\x-3.0)^2 + 1.1})
+            node[right, red!70!black] {};
+        \node[red!70!black, above left] at (1.2, 4.0) {$\frac{1}{n}\sum_i L(z_i, \theta) + \epsilon L(z, \theta)$};
+
+        % Mark hat{theta} (original minimum)
+        \fill[blue!70!black] (4, 0.8) circle (3pt);
+        \draw[dashed, blue!70!black] (4, 0) -- (4, 0.8);
+        \node[below, blue!70!black] at (4, -0.05) {$\hat{\theta}$};
+
+        % Mark hat{theta}_{epsilon,z} (new minimum)
+        \fill[red!70!black] (3.0, 1.1) circle (3pt);
+        \draw[dashed, red!70!black] (3.0, 0) -- (3.0, 1.1);
+        \node[below, red!70!black] at (3.0, -0.05) {$\hat{\theta}_{\epsilon,z}$};
+
+        % Influence arrow between the two minima
+        \draw[<->, thick, black!60!green, line width=1.2pt] (3.05, 0.45) -- (3.95, 0.45);
+        \node[above, black!60!green] at (3.5, 0.45) {$\epsilon \cdot \mathcal{I}_{\text{up}}(z)$};
+
+        % Tangent line at hat{theta} on the upweighted loss (showing linear approx)
+        \draw[dashed, orange, thick, domain=2.0:5.5, samples=2]
+            plot (\x, {0.44*(4-3.0)*(\x - 4) + 0.22*(4-3.0)^2 + 1.1});
+        \node[orange, right] at (5.5, 2.3) {\small linear approx.};
+    \end{tikzpicture}
+    \end{center}
+
+    \vspace{-0.2cm}
+    \begin{itemize}
+        \item \textcolor{blue!70!black}{Blue}: original empirical risk, minimized at $\hat{\theta}$
+        \item \textcolor{red!70!black}{Red}: upweighted loss (adding $\epsilon \, L(z, \theta)$), minimized at $\hat{\theta}_{\epsilon,z}$
+        \item The \textcolor{black!60!green}{shift} is approximated by the influence function without retraining
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Approximating Leave-One-Out}
+    Removing a training point $z$ from the dataset is equivalent to upweighting it by $\epsilon = -\frac{1}{n}$.
+
+    \vspace{0.5cm}
+    Using a first-order Taylor approximation, the parameter change after removing $z$ is:
+    \begin{equation}
+        \hat{\theta}_{-z} - \hat{\theta} \approx -\frac{1}{n} \mathcal{I}_{\text{up, params}}(z) = \frac{1}{n} H_{\hat{\theta}}^{-1} \nabla_{\theta} L(z, \hat{\theta})
+    \end{equation}
+
+    \pause
+    \vspace{0.5cm}
+    This gives us a \emph{closed-form approximation} of the LOO parameters:
+    \begin{equation}
+        \hat{\theta}_{-z} \approx \hat{\theta} + \frac{1}{n} H_{\hat{\theta}}^{-1} \nabla_{\theta} L(z, \hat{\theta})
+    \end{equation}
+
+    \pause
+    \vspace{0.5cm}
+    \textbf{Key insight:} No retraining needed --- just one gradient, one Hessian inverse, and one scalar $\frac{1}{n}$.
 \end{frame}
 
 % Slide 5: Influence on Test Loss
