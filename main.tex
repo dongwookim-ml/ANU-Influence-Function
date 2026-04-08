@@ -343,7 +343,7 @@
     \end{equation}
     % \annotatetwo[yshift=-3em]{below}{jac1}{m}
     \annotate[yshift=-1em]{below,left}{jac2}{\small Jacobian of network outputs w.r.t.\ parameters}
-    \annotate[yshift=1em]{above}{lossH}{\small Hessian of loss w.r.t.\ outputs}
+    \annotate[yshift=1em]{above}{lossH}{\small Hessian of loss w.r.t.\ outputs (e.g., logits)}
 \end{frame}
 
 % Slide 10: The Real Question being Answered
@@ -694,12 +694,12 @@
 
     \vspace{0.5cm}
     \begin{itemize}
-        \item $\mathcal{T}_1 = \bar{v}^\top H_f \bar{v}$: the first-order parameter shift $\bar{v}$ may \emph{overshoot} or \emph{undershoot} on the evaluation objective --- $H_f$ measures this curvature mismatch
-        \item $\mathcal{T}_2 = 2u^\top H_S \bar{v}$: the group's own curvature $H_S$ deflects the parameter update from the first-order direction --- $u$ measures how much this deflection affects evaluation
+        \item $\mathcal{T}_1$: how the parameter shift interacts with \emph{evaluation} curvature
+        \item $\mathcal{T}_2$: how the group's \emph{training} curvature deflects the update
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Pairwise Interaction Expansion}
+\begin{frame}{$\mathcal{T}_1$: Pairwise Interaction Expansion}
     Let $v_i = H^{-1}\nabla_\theta \ell(z_i, \theta^*)$. Then $\mathcal{T}_1$ decomposes into pairwise terms:
 
     \begin{equation}
@@ -715,6 +715,23 @@
         \item Detecting \textbf{redundancy}: $v_i^\top H_f v_j > 0$ (diminishing returns)
         \item Detecting \textbf{complementarity}: $v_i^\top H_f v_j < 0$ (synergy)
     \end{itemize}
+\end{frame}
+
+\begin{frame}{$\mathcal{T}_2$: Curvature Correction \citep{basu2020second}}
+    $$\mathcal{T}_2 = 2\,u^\top H_S \,\bar{v}, \qquad u = H^{-1}g_f, \quad \bar{v} = H^{-1}g_S$$
+
+    \vspace{0.5cm}
+    $H_S$ rotates the update direction $\bar{v}$. The correction $u^\top (H_S \bar{v})$ asks: does this rotation \emph{help} or \emph{hurt} evaluation?
+
+    \vspace{0.5cm}
+    \begin{itemize}
+        \item $\mathcal{T}_2 > 0$: the group's curvature deflects the update \remph{toward} the evaluation objective $\Rightarrow$ \emph{harmful} (increases loss)
+        \item $\mathcal{T}_2 < 0$: deflection is \emph{away} from evaluation loss $\Rightarrow$ \emph{beneficial}
+        \item $\mathcal{T}_2 \approx 0$: group curvature is orthogonal to evaluation --- no correction needed
+    \end{itemize}
+
+    \vspace{0.5cm}
+    Large $\mathcal{T}_2$ signals that first-order influence \emph{misjudges} the group's effect.
 \end{frame}
 
 \begin{frame}{Application: Selecting Synthetic Data for LLM SFT}
@@ -832,7 +849,7 @@
     \end{itemize}
 
     \vspace{0.5cm}
-    \textbf{Common theme:} moving beyond i.i.d.\ first-order influence to capture \emph{structure} and \emph{interactions} in training data.
+    Move beyond i.i.d.\ first-order influence to capture \emph{structure} and \emph{interactions} in training data.
 \end{frame}
 
 \begin{frame}[allowframebreaks]{References}
