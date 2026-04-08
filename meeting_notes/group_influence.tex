@@ -1,0 +1,831 @@
+%%%%%%%% ICML 2025 EXAMPLE LATEX SUBMISSION FILE %%%%%%%%%%%%%%%%%
+
+\documentclass{article}
+
+% Recommended, but optional, packages for figures and better typesetting:
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{booktabs} % for professional tables
+
+% hyperref makes hyperlinks in the resulting PDF.
+% If your build breaks (sometimes temporarily if a hyperlink spans a page)
+% please comment out the following usepackage line and replace
+% \usepackage{icml2025} with \usepackage[nohyperref]{icml2025} above.
+\usepackage{hyperref}
+
+
+% Attempt to make hyperref and algorithmic work together better:
+\newcommand{\theHalgorithm}{\arabic{algorithm}}
+
+% Use the following line for the initial blind version submitted for review:
+\usepackage{icml2025}
+
+% If accepted, instead use the following line for the camera-ready submission:
+% \usepackage[accepted]{icml2025}
+
+% For theorems and such
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{amsthm}
+
+% if you use cleveref..
+\usepackage[capitalize,noabbrev]{cleveref}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% THEOREMS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{assumption}[theorem]{Assumption}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% Todonotes is useful during development; simply uncomment the next line
+%    and comment out the line below the next line to turn off comments
+%\usepackage[disable,textsize=tiny]{todonotes}
+\usepackage[textsize=tiny]{todonotes}
+
+
+% The \icmltitle you define below is probably too long as a header.
+% Therefore, a short form for the running title is supplied here:
+\icmltitlerunning{Submission and Formatting Instructions for ICML 2025}
+
+\begin{document}
+
+
+\onecolumn
+% \twocolumn[
+\icmltitle{Submission and Formatting Instructions for \\
+           International Conference on Machine Learning (ICML 2025)}
+
+% It is OKAY to include author information, even for blind
+% submissions: the style file will automatically remove it for you
+% unless you've provided the [accepted] option to the icml2025
+% package.
+
+% List of affiliations: The first argument should be a (short)
+% identifier you will use later to specify author affiliations
+% Academic affiliations should list Department, University, City, Region, Country
+% Industry affiliations should list Company, City, Region, Country
+
+% You can specify symbols, otherwise they are numbered in order.
+% Ideally, you should not use this facility. Affiliations will be numbered
+% in order of appearance and this is the preferred way.
+\icmlsetsymbol{equal}{*}
+
+\begin{icmlauthorlist}
+\icmlauthor{Firstname1 Lastname1}{equal,yyy}
+\icmlauthor{Firstname2 Lastname2}{equal,yyy,comp}
+\icmlauthor{Firstname3 Lastname3}{comp}
+% \icmlauthor{Firstname4 Lastname4}{sch}
+% \icmlauthor{Firstname5 Lastname5}{yyy}
+% \icmlauthor{Firstname6 Lastname6}{sch,yyy,comp}
+% \icmlauthor{Firstname7 Lastname7}{comp}
+% %\icmlauthor{}{sch}
+% \icmlauthor{Firstname8 Lastname8}{sch}
+% \icmlauthor{Firstname8 Lastname8}{yyy,comp}
+%\icmlauthor{}{sch}
+%\icmlauthor{}{sch}
+\end{icmlauthorlist}
+
+% \icmlaffiliation{yyy}{Department of XXX, University of YYY, Location, Country}
+% \icmlaffiliation{comp}{Company Name, Location, Country}
+% \icmlaffiliation{sch}{School of ZZZ, Institute of WWW, Location, Country}
+
+% \icmlcorrespondingauthor{Firstname1 Lastname1}{first1.last1@xxx.edu}
+% \icmlcorrespondingauthor{Firstname2 Lastname2}{first2.last2@www.uk}
+
+% You may provide any keywords that you
+% find helpful for describing your paper; these are used to populate
+% the "keywords" metadata in the PDF but will not be shown in the document
+\icmlkeywords{Machine Learning, ICML}
+
+\vskip 0.3in
+% ]
+
+
+% this must go after the closing bracket ] following \twocolumn[ ...
+
+% This command actually creates the footnote in the first column
+% listing the affiliations and the copyright notice.
+% The command takes one argument, which is text to display at the start of the footnote.
+% The \icmlEqualContribution command is standard text for equal contribution.
+% Remove it (just {}) if you do not need this facility.
+
+%\printAffiliationsAndNotice{}  % leave blank if no need to mention equal contribution
+% \printAffiliationsAndNoti ce{\icmlEqualContribution} % otherwise use the standard text.
+
+\begin{abstract}
+\end{abstract}
+
+\input{tex/Introduction}
+
+\section{Second-order Influence}
+% =========================
+% Second-order influence: derivation details
+% =========================
+
+\paragraph{Setup.}
+Let the (average) training objective be
+\[
+\mathcal{L}(\theta) \;=\; \frac{1}{N}\sum_{z\in \mathcal{D}_{\mathrm{train}}}\ell(z,\theta),
+\qquad
+\mathcal{L}_S(\theta) \;=\; \frac{1}{N}\sum_{z\in S}\ell(z,\theta),
+\]
+and define the perturbed objective (upweighting the subset $S$ by $\varepsilon$)
+\[
+\mathcal{L}_\varepsilon(\theta)\;=\;\mathcal{L}(\theta)+\varepsilon\,\mathcal{L}_S(\theta).
+\]
+Let $\theta^\star=\arg\min_\theta \mathcal{L}(\theta)$ and $\theta_\varepsilon=\arg\min_\theta \mathcal{L}_\varepsilon(\theta)$.
+Define
+\[
+g_f := \nabla_\theta f(\theta^\star),\quad H_f:=\nabla_\theta^2 f(\theta^\star),
+\]
+\[
+g_S := \nabla_\theta \mathcal{L}_S(\theta^\star)=\frac{1}{N}\sum_{z\in S}\nabla_\theta \ell(z,\theta^\star),\quad
+H_S := \nabla_\theta^2 \mathcal{L}_S(\theta^\star)=\frac{1}{N}\sum_{z\in S}\nabla_\theta^2 \ell(z,\theta^\star),
+\]
+\[
+H := \nabla_\theta^2 \mathcal{L}(\theta^\star)=\frac{1}{N}\sum_{z\in \mathcal{D}_{\mathrm{train}}}\nabla_\theta^2 \ell(z,\theta^\star).
+\]
+
+\paragraph{Step 1: expansion of the stationarity condition.}
+The optimality condition for $\theta_\varepsilon$ is
+\[
+\nabla_\theta \mathcal{L}_\varepsilon(\theta_\varepsilon)
+=\nabla_\theta\mathcal{L}(\theta_\varepsilon)+\varepsilon\,\nabla_\theta\mathcal{L}_S(\theta_\varepsilon)=0.
+\]
+Write $\Delta := \theta_\varepsilon-\theta^\star$ (so $\Delta=O(\varepsilon)$), and use
+\[
+\nabla_\theta\mathcal{L}(\theta^\star+\Delta)\approx \nabla_\theta\mathcal{L}(\theta^\star)+H\Delta
+=H\Delta
+\quad(\text{since }\nabla_\theta\mathcal{L}(\theta^\star)=0),
+\]
+\[
+\nabla_\theta\mathcal{L}_S(\theta^\star+\Delta)\approx g_S+H_S\Delta.
+\]
+Keeping terms up to order $O(\varepsilon^2)$ yields
+\[
+0 \approx H\Delta + \varepsilon(g_S+H_S\Delta)
+\quad\Longrightarrow\quad
+(H+\varepsilon H_S)\Delta \approx -\varepsilon g_S.
+\]
+Using the Neumann expansion
+\[
+(H+\varepsilon H_S)^{-1}\approx H^{-1}-\varepsilon H^{-1}H_S H^{-1},
+\]
+we obtain
+\[
+\Delta
+\approx -(H^{-1}-\varepsilon H^{-1}H_S H^{-1})\,\varepsilon g_S
+= -\varepsilon H^{-1}g_S + \varepsilon^2 H^{-1}H_S H^{-1}g_S
+\;+\;O(\varepsilon^3).
+\]
+
+\paragraph{Step 2: second-order Taylor expansion of $f(\theta_\varepsilon)$.}
+A second-order expansion around $\theta^\star$ gives
+\[
+f(\theta_\varepsilon) = f(\theta^\star+\Delta)
+\approx f(\theta^\star) + g_f^\top \Delta + \frac{1}{2}\Delta^\top H_f \Delta.
+\]
+Substituting $\Delta = -\varepsilon H^{-1}g_S + \varepsilon^2 H^{-1}H_S H^{-1}g_S + O(\varepsilon^3)$
+and keeping terms up to $O(\varepsilon^2)$:
+\[
+g_f^\top\Delta
+= -\varepsilon\, g_f^\top H^{-1}g_S
++\varepsilon^2\, g_f^\top H^{-1}H_S H^{-1}g_S,
+\]
+\[
+\frac{1}{2}\Delta^\top H_f \Delta
+= \frac{\varepsilon^2}{2}\,(H^{-1}g_S)^\top H_f (H^{-1}g_S).
+\]
+Therefore,
+\[
+f(\theta_\varepsilon)
+\approx f(\theta^\star)
+-\varepsilon\, g_f^\top H^{-1}g_S
++\frac{\varepsilon^2}{2}\Big(
+(H^{-1}g_S)^\top H_f (H^{-1}g_S)
++2(H^{-1}g_f)^\top H_S (H^{-1}g_S)
+\Big),
+\]
+where we used $g_f^\top H^{-1}H_S H^{-1}g_S = (H^{-1}g_f)^\top H_S (H^{-1}g_S)$ (symmetry).
+
+% =========================
+% Pairwise expansion of the synergy term
+% =========================
+
+\paragraph{Synergy term as pairwise interactions.}
+Define $v_i := H^{-1}\nabla_\theta \ell(z_i,\theta^\star)$. Then
+\[
+H^{-1}g_S
+=\frac{1}{N}\sum_{z_i\in S} H^{-1}\nabla_\theta \ell(z_i,\theta^\star)
+=\frac{1}{N}\sum_{z_i\in S} v_i.
+\]
+Hence,
+\[
+(H^{-1}g_S)^\top H_f(H^{-1}g_S)
+=\Big(\frac{1}{N}\sum_{i\in S} v_i\Big)^\top
+H_f
+\Big(\frac{1}{N}\sum_{j\in S} v_j\Big)
+=\frac{1}{N^2}\sum_{i\in S}\sum_{j\in S} v_i^\top H_f v_j.
+\]
+This shows that synergy is governed by pairwise similarities $v_i^\top H_f v_j$.
+
+% =========================
+% Cross-dataset decomposition
+% =========================
+
+\paragraph{Cross-dataset synergy (two groups).}
+Let $S=S_D\cup S_H$ and $g_S=g_D+g_H$. Then
+\[
+(H^{-1}g_S)^\top H_f(H^{-1}g_S)
+=
+(H^{-1}g_D)^\top H_f(H^{-1}g_D)
++
+(H^{-1}g_H)^\top H_f(H^{-1}g_H)
++
+2(H^{-1}g_D)^\top H_f(H^{-1}g_H).
+\]
+Moreover, with $v_i:=H^{-1}\nabla_\theta \ell(z_i,\theta^\star)$,
+\[
+2(H^{-1}g_D)^\top H_f(H^{-1}g_H)
+=\frac{2}{N^2}\sum_{i\in S_D}\sum_{j\in S_H} v_i^\top H_f v_j.
+\]
+
+% =========================
+% Low-dimensional projection approximation
+% =========================
+
+\paragraph{Low-dimensional projection approximation.}
+Let $P\in\mathbb{R}^{k\times n}$ be a projection (with $k\ll n$).
+A common approximation for first-order influence is
+\[
+g_{\mathrm{te}}^\top H^{-1}g_{\mathrm{tr}}
+\;\approx\;
+(Pg_{\mathrm{te}})^\top (P H P^\top)^{-1}(Pg_{\mathrm{tr}}).
+\]
+For the synergy term, define the projected solve
+\[
+u_S := (P H P^\top)^{-1}(P g_S)\in\mathbb{R}^{k},
+\]
+so that $H^{-1}g_S \approx P^\top u_S$ in the projected subspace, and approximate
+\[
+(H^{-1}g_S)^\top H_f(H^{-1}g_S)
+\;\approx\;
+u_S^\top (P H_f P^\top) u_S
+=
+\big((P H P^\top)^{-1}P g_S\big)^\top (P H_f P^\top)\big((P H P^\top)^{-1}P g_S\big).
+\]
+
+% ============================================================
+% Synthetic data selection that complements real data
+% via second-order influence (LLM setting)
+% ============================================================
+
+\section{Selecting Synthetic Data that Complements Real Data via Second-Order Influence}
+\label{sec:synth_complement}
+
+\subsection{Motivation}
+Large language models are increasingly tuned using a mixture of (i) small, high-quality real data
+(human-written demonstrations or preferences) and (ii) large pools of synthetic data
+(distilled or self-generated instructions, dialogues, preference pairs).
+A key challenge is that \emph{the value of a synthetic example depends on what real data is already present}.
+Synthetic data can be:
+\begin{itemize}
+  \item \textbf{redundant}: it pushes the parameters in directions already covered by real data, yielding diminishing returns;
+  \item \textbf{complementary}: it fills gaps left by real data and improves target evaluation performance;
+  \item \textbf{interfering}: it interacts with real data in a way that harms the target behavior (negative transfer).
+\end{itemize}
+
+First-order influence scores are linear in the chosen subset and thus cannot represent
+interaction effects between real and synthetic groups.
+Second-order influence introduces a quadratic term that captures these interactions,
+providing a principled signal for \emph{complementary synthetic subset selection}.
+
+\subsection{Training objective and data groups}
+Let $z=(x,y)$ be a supervised instruction-following example.
+Let $\mathcal{D}_{\mathrm{real}}$ denote the real dataset and $\mathcal{P}_{\mathrm{syn}}$ a large pool of synthetic candidates.
+We aim to select a subset $S \subseteq \mathcal{P}_{\mathrm{syn}}$ under a budget constraint
+(e.g., $|S|\le B$ or token budget $\mathrm{Tok}(S)\le T$).
+
+Define the (average) training losses
+\[
+\mathcal{L}_{\mathrm{real}}(\theta) := \frac{1}{|\mathcal{D}_{\mathrm{real}}|}\sum_{z\in \mathcal{D}_{\mathrm{real}}} \ell(z,\theta),
+\qquad
+\mathcal{L}_{S}(\theta) := \frac{1}{|S|}\sum_{z\in S} \ell(z,\theta),
+\]
+where for SFT we can use the standard token-level negative log-likelihood
+\[
+\ell((x,y),\theta) := -\log p_\theta(y\,|\,x).
+\]
+
+We consider a small upweighting of the synthetic subset $S$:
+\[
+\mathcal{L}_\varepsilon(\theta) := \mathcal{L}_{0}(\theta) + \varepsilon \,\mathcal{L}_{S}(\theta),
+\]
+where $\mathcal{L}_{0}$ is a \emph{reference} training objective defining the reference point $\theta^\star$.
+Pragmatically, $\theta^\star$ can be (i) a checkpoint before adding the new synthetic data,
+or (ii) a solution trained on a broader mixture so that group-wise gradients need not vanish exactly.
+This avoids degeneracy where $\nabla \mathcal{L}_{\mathrm{real}}(\theta^\star)=0$ would remove real--synthetic interaction signals.
+
+Let
+\[
+\theta^\star := \arg\min_\theta \mathcal{L}_{0}(\theta),
+\qquad
+\theta_\varepsilon := \arg\min_\theta \mathcal{L}_{\varepsilon}(\theta).
+\]
+
+\subsection{Evaluation function $f$ for LLM tuning}
+We choose a differentiable evaluation objective $f(\theta)$ to \emph{minimize}, defined on held-out evaluation sets.
+A practical choice is a weighted sum of differentiable surrogate losses:
+\[
+f(\theta) = \lambda_{\mathrm{ID}} f_{\mathrm{ID}}(\theta) + \lambda_{\mathrm{OOD}} f_{\mathrm{OOD}}(\theta)
++ \lambda_{\mathrm{safe}} f_{\mathrm{safe}}(\theta) + \lambda_{\mathrm{pref}} f_{\mathrm{pref}}(\theta),
+\]
+where:
+\begin{align*}
+f_{\mathrm{ID}}(\theta)
+&:= \frac{1}{|\mathcal{D}_{\mathrm{eval}}^{\mathrm{ID}}|}\sum_{(x,y)\in \mathcal{D}_{\mathrm{eval}}^{\mathrm{ID}}} \big(-\log p_\theta(y|x)\big),\\
+f_{\mathrm{OOD}}(\theta)
+&:= \frac{1}{|\mathcal{D}_{\mathrm{eval}}^{\mathrm{OOD}}|}\sum_{(x,y)\in \mathcal{D}_{\mathrm{eval}}^{\mathrm{OOD}}} \big(-\log p_\theta(y|x)\big),\\
+f_{\mathrm{safe}}(\theta)
+&:= \frac{1}{|\mathcal{D}_{\mathrm{eval}}^{\mathrm{safe}}|}\sum_{(x,y_{\mathrm{safe}})\in \mathcal{D}_{\mathrm{eval}}^{\mathrm{safe}}} \big(-\log p_\theta(y_{\mathrm{safe}}|x)\big).
+\end{align*}
+If preference data is available, a differentiable held-out preference objective (e.g., DPO-style) can be used:
+\[
+f_{\mathrm{pref}}(\theta)
+:= \frac{1}{|\mathcal{D}_{\mathrm{eval}}^{\mathrm{pref}}|}\sum_{(x,y^+,y^-)\in \mathcal{D}_{\mathrm{eval}}^{\mathrm{pref}}}
+\Big(-\log \sigma\big(\beta(\log p_\theta(y^+|x)-\log p_\theta(y^-|x))\big)\Big),
+\]
+with inverse-temperature $\beta>0$ and sigmoid $\sigma(\cdot)$.
+The weights $\lambda_\cdot$ set the trade-off between in-domain quality, generalization, safety, and preferences.
+
+\subsection{Second-order influence for adding a synthetic subset}
+Define at $\theta^\star$:
+\[
+g_f := \nabla_\theta f(\theta^\star), \quad H_f := \nabla_\theta^2 f(\theta^\star), \quad
+H := \nabla_\theta^2 \mathcal{L}_0(\theta^\star),
+\]
+and for the selected synthetic subset $S$,
+\[
+g_S := \nabla_\theta \mathcal{L}_{S}(\theta^\star), \quad H_S := \nabla_\theta^2 \mathcal{L}_{S}(\theta^\star).
+\]
+
+The second-order influence expansion gives
+\begin{equation}
+f(\theta_\varepsilon)
+\approx
+f(\theta^\star)
+-\varepsilon \, g_f^\top H^{-1} g_S
++\frac{\varepsilon^2}{2}
+\Big(
+(H^{-1}g_S)^\top H_f (H^{-1}g_S)
++2(H^{-1}g_f)^\top H_S (H^{-1}g_S)
+\Big).
+\label{eq:second_order_if}
+\end{equation}
+In what follows, we focus on the synergy term
+\[
+\Psi(S) := (H^{-1}g_S)^\top H_f (H^{-1}g_S),
+\]
+which captures subset interactions and admits a pairwise expansion.
+
+\subsection{Pairwise interaction view and complementarity}
+Let $v(z) := H^{-1}\nabla_\theta \ell(z,\theta^\star)$.
+For $S=\{z_1,\dots,z_m\}$ and $g_S=\frac{1}{m}\sum_{i=1}^m \nabla_\theta \ell(z_i,\theta^\star)$,
+\[
+H^{-1}g_S = \frac{1}{m}\sum_{i=1}^m v(z_i),
+\qquad
+\Psi(S)
+=
+\Big(\frac{1}{m}\sum_{i=1}^m v(z_i)\Big)^\top
+H_f
+\Big(\frac{1}{m}\sum_{j=1}^m v(z_j)\Big)
+=
+\frac{1}{m^2}\sum_{i,j=1}^m v(z_i)^\top H_f v(z_j).
+\]
+Thus, the synergy is governed by pairwise similarities under the curvature induced by $H_f$.
+
+\paragraph{Real--synthetic complementarity via a cross term.}
+Let $R$ denote a fixed real anchor group (e.g., $\mathcal{D}_{\mathrm{real}}$ or a real minibatch distribution),
+with
+\[
+g_R := \nabla_\theta \mathcal{L}_{R}(\theta^\star), \qquad
+\text{and}\qquad
+g_{R\cup S} = g_R + g_S.
+\]
+Then the synergy decomposes as
+\begin{equation}
+\Psi(R\cup S)
+=
+(H^{-1}g_R)^\top H_f (H^{-1}g_R)
++
+(H^{-1}g_S)^\top H_f (H^{-1}g_S)
++
+2(H^{-1}g_R)^\top H_f (H^{-1}g_S).
+\label{eq:cross_decomp}
+\end{equation}
+The cross term
+\[
+\Psi_{\times}(R,S) := (H^{-1}g_R)^\top H_f (H^{-1}g_S)
+\]
+quantifies how synthetic updates interact with real updates under the evaluation curvature.
+
+\paragraph{Sign convention (minimization).}
+Because $f$ is defined as an evaluation \emph{loss} to be minimized, the net predicted gain from adding $S$
+includes a term $-\varepsilon^2\,\Psi_{\times}(R,S)$ (see below).
+Hence, for loss-minimization, a \emph{negative} $\Psi_{\times}(R,S)$ is constructive (complementary),
+while a positive $\Psi_{\times}(R,S)$ is potentially interfering.
+
+\subsection{Objective for selecting complementary synthetic subsets}
+We compare training with real anchor $R$ alone versus $R\cup S$.
+Ignoring the $H_S$-dependent correction in \eqref{eq:second_order_if} for clarity (or treating it as a higher-cost optional term),
+the predicted change in evaluation loss from adding $S$ on top of $R$ is
+\begin{align}
+\widehat{\Delta f}(S;R)
+&:= \widehat{f}(R\cup S) - \widehat{f}(R) \nonumber\\
+&\approx
+-\varepsilon\, g_f^\top H^{-1} g_S
++\frac{\varepsilon^2}{2}\Big(
+2(H^{-1}g_R)^\top H_f(H^{-1}g_S)
++
+(H^{-1}g_S)^\top H_f(H^{-1}g_S)
+\Big).
+\label{eq:delta_f_RS}
+\end{align}
+Define the predicted \emph{gain} (decrease in $f$)
+\[
+\widehat{\mathcal{G}}(S;R) := -\widehat{\Delta f}(S;R).
+\]
+Then
+\begin{equation}
+\widehat{\mathcal{G}}(S;R)
+\approx
+\underbrace{\varepsilon\, g_f^\top H^{-1} g_S}_{\text{first-order utility}}
+\;-\;
+\underbrace{\varepsilon^2 (H^{-1}g_R)^\top H_f(H^{-1}g_S)}_{\text{real--synthetic complementarity}}
+\;-\;
+\underbrace{\frac{\varepsilon^2}{2}(H^{-1}g_S)^\top H_f(H^{-1}g_S)}_{\text{synthetic redundancy / diminishing returns}}.
+\label{eq:gain_objective}
+\end{equation}
+We select $S$ by maximizing $\widehat{\mathcal{G}}(S;R)$ subject to a budget:
+\[
+\max_{S\subseteq \mathcal{P}_{\mathrm{syn}}} \;\widehat{\mathcal{G}}(S;R)
+\quad
+\text{s.t.}\quad |S|\le B \;\; \text{or}\;\; \mathrm{Tok}(S)\le T.
+\]
+
+\paragraph{Per-example decomposition.}
+Let $S=\{z_{i_1},\dots,z_{i_m}\}$ and define $v_i := v(z_i)=H^{-1}\nabla \ell(z_i,\theta^\star)$.
+Let
+\[
+u_i := g_f^\top v_i, \qquad c_i := (H^{-1}g_R)^\top H_f v_i, \qquad q_{ij} := v_i^\top H_f v_j.
+\]
+Then
+\[
+\widehat{\mathcal{G}}(S;R)
+\approx
+\frac{\varepsilon}{m}\sum_{i\in S} u_i
+-\frac{\varepsilon^2}{m}\sum_{i\in S} c_i
+-\frac{\varepsilon^2}{2m^2}\sum_{i,j\in S} q_{ij}.
+\]
+The last term penalizes choosing many synthetic points that are similar under $q_{ij}$,
+which operationalizes a curvature-aware notion of redundancy in the Hessian-weighted gradient space.
+
+\paragraph{Greedy selection (practical).}
+A practical approach is greedy maximization using marginal gains:
+for current set $S$, add $z_i$ that maximizes $\Delta(i\mid S) := \widehat{\mathcal{G}}(S\cup\{z_i\};R)-\widehat{\mathcal{G}}(S;R)$.
+This yields an interaction-aware data selection rule that prefers
+high first-order utility, negative cross interaction with $R$ (constructive complementarity for loss-minimization),
+and low redundancy with the already selected synthetic points.
+
+\subsection{Projected computation for LLM-scale models}
+Directly forming $H^{-1}$ and $H_f$ is infeasible for LLMs.
+Introduce a projection $P\in\mathbb{R}^{k\times n}$ with $k\ll n$ and define
+\[
+\tilde{H} := P H P^\top,\quad \tilde{H}_f := P H_f P^\top,\quad \tilde{g}(z) := P\nabla_\theta \ell(z,\theta^\star),\quad \tilde{g}_f := P g_f,\quad \tilde{g}_R := P g_R.
+\]
+Approximate
+\[
+H^{-1}g \approx P^\top \tilde{H}^{-1}(P g),\qquad
+v(z)=H^{-1}\nabla \ell(z,\theta^\star)\approx P^\top \tilde{H}^{-1}\tilde{g}(z).
+\]
+Then the key quantities become low-dimensional:
+\[
+u_i \approx \tilde{g}_f^\top \tilde{H}^{-1}\tilde{g}(z_i),
+\qquad
+c_i \approx (\tilde{H}^{-1}\tilde{g}_R)^\top \tilde{H}_f(\tilde{H}^{-1}\tilde{g}(z_i)),
+\qquad
+q_{ij} \approx (\tilde{H}^{-1}\tilde{g}(z_i))^\top \tilde{H}_f(\tilde{H}^{-1}\tilde{g}(z_j)).
+\]
+All computations scale with $k$ rather than $n$.
+
+\subsection{What to expect (testable hypotheses)}
+Assuming the approximation is sufficiently accurate for ranking, we expect:
+\begin{enumerate}
+  \item \textbf{Token efficiency:} at a fixed synthetic token budget, the selected set $S$ yields lower evaluation loss
+  (or better downstream metrics) than baselines such as random selection and first-order influence-only selection.
+  \item \textbf{Complementarity over redundancy:} selected synthetic examples exhibit more negative cross interaction
+  $\Psi_{\times}(R,S)$ (constructive for loss-minimization) compared to naive diversity heuristics,
+  and lower within-synthetic redundancy measured by the quadratic term.
+  \item \textbf{Improved generalization:} when $f$ includes an OOD component, selection preferentially chooses synthetic data
+  that improves OOD while minimally degrading in-domain and safety components.
+  \item \textbf{Predictive validity:} the predicted gain $\widehat{\mathcal{G}}(S;R)$ correlates with empirical improvements
+  measured after fine-tuning (rank correlation across different subsets).
+\end{enumerate}
+
+\subsection{Experimental plan}
+\paragraph{Step 0: model and training regime.}
+Choose a base LLM and a tuning regime (full fine-tuning or parameter-efficient tuning such as LoRA).
+Fix the real dataset $\mathcal{D}_{\mathrm{real}}$ and prepare a large synthetic pool $\mathcal{P}_{\mathrm{syn}}$.
+
+\paragraph{Step 1: define evaluation objective $f$.}
+Construct evaluation sets:
+$\mathcal{D}_{\mathrm{eval}}^{\mathrm{ID}}$ (held-out real),
+$\mathcal{D}_{\mathrm{eval}}^{\mathrm{OOD}}$ (gap-focused tasks),
+$\mathcal{D}_{\mathrm{eval}}^{\mathrm{safe}}$ (safety),
+and optionally $\mathcal{D}_{\mathrm{eval}}^{\mathrm{pref}}$ (preferences).
+Define $f$ as the weighted sum in the previous section.
+
+\paragraph{Step 2: choose reference point $\theta^\star$.}
+Use a checkpoint that reflects the current model state before adding the candidate synthetic subset.
+Compute (or approximate) $H$, $g_f$, $H_f$, and the group gradient $g_R$ at $\theta^\star$.
+
+\paragraph{Step 3: compute projected quantities.}
+Choose projection dimension $k$ and projection matrix $P$.
+Compute $\tilde{H}$ and $\tilde{H}_f$ using stochastic approximations (e.g., Gauss--Newton / Fisher-style estimates).
+For each candidate synthetic example $z_i\in\mathcal{P}_{\mathrm{syn}}$, compute $\tilde{g}(z_i)$.
+
+\paragraph{Step 4: selection methods (compare baselines).}
+For each budget $B$ (or token budget $T$), construct subsets:
+\begin{itemize}
+  \item \textbf{Random:} uniform sampling from $\mathcal{P}_{\mathrm{syn}}$.
+  \item \textbf{First-order only:} select top-$B$ by $u_i$ (utility) or by $g_f^\top H^{-1} g_{z_i}$.
+  \item \textbf{Heuristic diversity:} cluster-based uniform sampling (embedding-space or gradient-space).
+  \item \textbf{Second-order complement (proposed):} greedy maximize $\widehat{\mathcal{G}}(S;R)$ in \eqref{eq:gain_objective}
+  using projected computations.
+  \item \textbf{Ablations:} (i) remove cross term; (ii) remove redundancy term; (iii) vary $k$.
+\end{itemize}
+
+\paragraph{Step 5: controlled fine-tuning.}
+For each selected subset $S$, fine-tune from the same initialization with the same compute budget.
+Keep the real data proportion fixed and add synthetic subset $S$ according to a controlled schedule.
+
+\paragraph{Step 6: evaluation and analysis.}
+Report:
+\begin{itemize}
+  \item \textbf{Primary:} evaluation losses corresponding to $f_{\mathrm{ID}}, f_{\mathrm{OOD}}, f_{\mathrm{safe}}, f_{\mathrm{pref}}$.
+  \item \textbf{Secondary:} non-differentiable downstream metrics (benchmark scores, judge win-rates, red-teaming success rates).
+  \item \textbf{Attribution validity:} rank correlation between $\widehat{\mathcal{G}}(S;R)$ and empirical gains.
+  \item \textbf{Interaction diagnostics:} distributions of $\Psi_{\times}(R,S)$ and within-synthetic redundancy for each method.
+\end{itemize}
+
+\paragraph{Step 7: robustness checks.}
+Repeat across:
+(i) different synthetic generators,
+(ii) different real dataset sizes (to test complementarity under scarcity),
+(iii) different evaluation weightings $\lambda_\cdot$,
+(iv) multiple random seeds for selection and training.
+
+
+% ============================================================
+% Influence estimation for non-differentiable evaluation metrics
+% ============================================================
+
+\section{Influence Estimation with Non-differentiable Evaluation Metrics}
+\label{sec:nondiff_f}
+
+\subsection{Why non-differentiable $f$ arises in LLM evaluation}
+Many LLM evaluations are \emph{discrete} or \emph{procedural}:
+exact match, pass@k, unit-test success, toxicity thresholding,
+and win-rate under an external judge (human or LLM-as-judge).
+Such metrics are non-differentiable with respect to model parameters $\theta$,
+especially under deterministic decoding.
+However, the second-order influence expansion used in this work requires
+$g_f=\nabla_\theta f(\theta^\star)$ and $H_f=\nabla_\theta^2 f(\theta^\star)$
+in Eq.~(1).
+This section provides two ways to handle non-differentiable $f$:
+
+\begin{itemize}
+\item \textbf{Stochastic relaxation (differentiable in expectation):}
+define $f$ as the expected value of a non-differentiable metric under stochastic generation,
+then compute unbiased estimators of $g_f$ and (if needed) $H_f$ via score-function identities.
+\item \textbf{Black-box directional estimation:}
+avoid explicit $g_f$ and $H_f$ by estimating the directional derivatives of $f$
+along influence directions using a small number of function evaluations.
+\end{itemize}
+
+\subsection{Stochastic relaxation: expected metric objective}
+Let $\mathcal{D}_{\mathrm{eval}}=\{x_i\}_{i=1}^M$ be evaluation prompts.
+Let the model induce a conditional distribution over outputs
+$y \sim p_\theta(\cdot \mid x)$ (e.g., sampling at temperature $\tau>0$).
+Let $r(x,y)\in \mathbb{R}$ be a (possibly non-differentiable) reward computed from a metric or a judge,
+for example:
+\begin{itemize}
+\item $r(x,y)=\mathbf{1}\{\text{unit tests pass}\}$ for code,
+\item $r(x,y)=\mathbf{1}\{\text{exact match}\}$ for QA,
+\item $r(x,y)=\mathbf{1}\{\text{judge prefers } y \text{ over baseline}\}$ for win-rate,
+\item $r(x,y)\in\{0,1,2\}$ for graded judge outcomes.
+\end{itemize}
+Define the evaluation \emph{loss} to minimize as the negative expected reward:
+\begin{equation}
+f(\theta)
+:=
+-\frac{1}{M}\sum_{i=1}^M
+\mathbb{E}_{y \sim p_\theta(\cdot\mid x_i)}\big[r(x_i,y)\big].
+\label{eq:expected_metric_f}
+\end{equation}
+Even if $r(\cdot,\cdot)$ is non-differentiable, $f(\theta)$ is differentiable under mild regularity conditions,
+because $\theta$ only enters through $p_\theta(y\mid x)$.
+
+\paragraph{First derivative (score-function / REINFORCE).}
+Let $s_\theta(x,y):=\nabla_\theta \log p_\theta(y\mid x)$.
+Then
+\begin{equation}
+g_f(\theta)
+=
+\nabla_\theta f(\theta)
+=
+-\frac{1}{M}\sum_{i=1}^M
+\mathbb{E}_{y \sim p_\theta(\cdot\mid x_i)}
+\Big[r(x_i,y)\, s_\theta(x_i,y)\Big].
+\label{eq:gf_reinforce}
+\end{equation}
+A standard variance-reduced form introduces a baseline $b(x)$:
+\[
+g_f(\theta)
+=
+-\frac{1}{M}\sum_{i=1}^M
+\mathbb{E}_{y \sim p_\theta(\cdot\mid x_i)}
+\Big[(r(x_i,y)-b(x_i))\, s_\theta(x_i,y)\Big],
+\]
+since $\mathbb{E}[b(x)\,s_\theta(x,y)]=b(x)\nabla_\theta \sum_y p_\theta(y\mid x)=0$.
+
+\paragraph{Second derivative (Hessian identity).}
+Assuming $r(x,y)$ does not depend on $\theta$ (judge fixed),
+\begin{align}
+H_f(\theta)
+&=
+\nabla_\theta^2 f(\theta)\nonumber\\
+&=
+-\frac{1}{M}\sum_{i=1}^M
+\mathbb{E}_{y \sim p_\theta(\cdot\mid x_i)}
+\Big[
+r(x_i,y)\,\nabla_\theta^2 \log p_\theta(y\mid x_i)
++
+r(x_i,y)\, s_\theta(x_i,y)s_\theta(x_i,y)^\top
+\Big].
+\label{eq:Hf_score_function}
+\end{align}
+In practice, one rarely forms $H_f$ explicitly; one estimates Hessian-vector products
+or only the quadratic forms $u^\top H_f u$ needed by second-order influence.
+
+\subsection{Plug-in influence with expected metric $f$}
+Let $\theta^\star$ be the reference parameters and let $H=\nabla_\theta^2 \mathcal{L}_0(\theta^\star)$.
+For a training subset $S$ with $g_S=\nabla_\theta \mathcal{L}_S(\theta^\star)$ and $H_S=\nabla_\theta^2 \mathcal{L}_S(\theta^\star)$,
+the second-order influence approximation (Eq.~(1)) applies with $f$ defined by \eqref{eq:expected_metric_f}:
+\begin{equation}
+f(\theta_\varepsilon)
+\approx
+f(\theta^\star)
+-\varepsilon\, g_f^\top H^{-1}g_S
++\frac{\varepsilon^2}{2}
+\Big(
+(H^{-1}g_S)^\top H_f (H^{-1}g_S)
++2(H^{-1}g_f)^\top H_S(H^{-1}g_S)
+\Big),
+\label{eq:second_order_if_nondiff}
+\end{equation}
+where $g_f$ and $H_f$ can be estimated via \eqref{eq:gf_reinforce}--\eqref{eq:Hf_score_function} at $\theta=\theta^\star$.
+
+\paragraph{Quadratic form of $H_f$ without constructing $H_f$.}
+Let $u \in \mathbb{R}^n$. From \eqref{eq:Hf_score_function},
+\begin{equation}
+u^\top H_f(\theta) u
+=
+-\frac{1}{M}\sum_{i=1}^M
+\mathbb{E}_{y \sim p_\theta(\cdot\mid x_i)}
+\Big[
+r(x_i,y)\, u^\top \nabla_\theta^2 \log p_\theta(y\mid x_i)\, u
++
+r(x_i,y)\, (u^\top s_\theta(x_i,y))^2
+\Big].
+\label{eq:ufHu_score}
+\end{equation}
+Thus the synergy term in \eqref{eq:second_order_if_nondiff} can be computed using only:
+(i) scalar products $u^\top s_\theta$, and
+(ii) Hessian-vector products of $\nabla_\theta^2 \log p_\theta(y\mid x)$ with $u$.
+
+\subsection{Black-box influence estimation via directional finite differences}
+If the evaluation metric is available only as a black-box function
+(e.g., proprietary judge, human-in-the-loop, complex simulator),
+we can avoid explicit $g_f$ and $H_f$ by estimating the required directional derivatives.
+
+\paragraph{Influence direction.}
+Define the (first-order) influence direction for subset $S$:
+\begin{equation}
+d_S := -H^{-1}g_S.
+\label{eq:influence_direction}
+\end{equation}
+This is the parameter change induced by upweighting $S$ by $\varepsilon$ to first order.
+(For LLMs, $d_S$ can be approximated in a low-dimensional subspace via gradient projection.)
+
+\paragraph{First-order influence as a directional derivative.}
+Assuming $f$ is directionally differentiable at $\theta^\star$ along $d_S$,
+\begin{equation}
+-\varepsilon\, g_f^\top H^{-1}g_S
+=
+\varepsilon\, g_f^\top d_S
+=
+\varepsilon\,\frac{\mathrm{d}}{\mathrm{d}t} f(\theta^\star + t d_S)\Big|_{t=0}.
+\label{eq:first_order_directional}
+\end{equation}
+We can estimate the derivative using a one-sided finite difference:
+\begin{equation}
+\widehat{\mathcal{I}}^{(1)}(S)
+:=
+\varepsilon \cdot \frac{f(\theta^\star + h d_S)-f(\theta^\star)}{h},
+\label{eq:first_order_fd}
+\end{equation}
+with step size $h>0$.
+
+\paragraph{Second-order synergy as a second directional derivative.}
+The synergy term equals the second directional derivative of $f$ along $d_S$:
+\begin{equation}
+(H^{-1}g_S)^\top H_f (H^{-1}g_S)
+=
+d_S^\top H_f d_S
+=
+\frac{\mathrm{d}^2}{\mathrm{d}t^2} f(\theta^\star + t d_S)\Big|_{t=0}.
+\label{eq:second_order_directional}
+\end{equation}
+A centered finite difference yields:
+\begin{equation}
+\widehat{\Psi}(S)
+:=
+\frac{f(\theta^\star + h d_S) -2f(\theta^\star)+ f(\theta^\star - h d_S)}{h^2}.
+\label{eq:second_order_fd}
+\end{equation}
+Then the second-order contribution in Eq.~(1) can be approximated as
+$\frac{\varepsilon^2}{2}\widehat{\Psi}(S)$ (ignoring the $H_S$ correction term),
+or used directly as an interaction-aware selection score.
+
+\paragraph{Cross interaction between real anchor $R$ and synthetic subset $S$.}
+For complementarity analysis, the cross term is the mixed second derivative:
+\begin{equation}
+(H^{-1}g_R)^\top H_f (H^{-1}g_S)
+=
+d_R^\top H_f d_S
+=
+\frac{\partial^2}{\partial \alpha\,\partial \beta}
+f(\theta^\star + \alpha d_R + \beta d_S)\Big|_{\alpha=\beta=0}.
+\label{eq:mixed_second_derivative}
+\end{equation}
+It can be estimated via a four-point stencil:
+\begin{equation}
+\widehat{\Psi}_\times(R,S)
+:=
+\frac{
+f(\theta^\star + h d_R + h d_S)
+- f(\theta^\star + h d_R)
+- f(\theta^\star + h d_S)
++ f(\theta^\star)
+}{h^2}.
+\label{eq:cross_fd}
+\end{equation}
+This estimator uses only evaluations of $f$, not its gradients.
+
+\subsection{Practical notes (variance and feasibility)}
+\paragraph{Common random numbers.}
+When $f(\theta)$ is estimated by sampling generations and judging them,
+use the same random seeds (or the same sampled noise) across
+$\theta^\star$, $\theta^\star \pm h d_S$, and $\theta^\star + h(d_R+d_S)$.
+This coupling greatly reduces the variance of finite differences.
+
+\paragraph{Where to perturb parameters.}
+For large LLMs, apply perturbations only in a tractable subspace:
+adapter weights (LoRA) or a projected subspace $P^\top \mathbb{R}^k$.
+Then $d_S$ in \eqref{eq:influence_direction} is replaced by a projected direction,
+and $\theta^\star \pm h d_S$ can be realized by a low-rank parameter delta.
+
+\paragraph{Step-size selection.}
+Pick $h$ such that:
+(i) the metric estimator is stable (not dominated by Monte Carlo noise),
+and (ii) the Taylor approximation remains locally valid.
+A practical procedure is to sweep $h$ over a logarithmic grid
+and choose a region where the finite-difference estimate is stable.
+
+\paragraph{Summary.}
+Non-differentiable evaluations can be handled either by:
+(i) defining an expected-metric $f$ and using score-function estimators for $g_f,H_f$,
+or (ii) treating $f$ as black-box and estimating the first-order and second-order influence terms
+from a small number of metric evaluations along influence directions.
+\end{document}

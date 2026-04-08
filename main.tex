@@ -545,7 +545,7 @@
     \begin{equation}
         \theta^*_\epsilon := \arg\min_{\theta} \frac{1}{N} \sum_v \eqnmarkbox[blue]{bregman}{D_L(h^G_v, h^{G,\theta_s}_v)} + \eqnmarkbox[red]{prox}{\frac{\lambda}{2}\|\theta - \theta_s\|^2} + \epsilon \sum_v \eqnmarkbox[orange]{edgeeff}{\left(L(h^G_v) - L(h^{G_{-e}}_v)\right)}
     \end{equation}
-    \annotate[yshift=-0.5em]{below,left}{bregman}{\small Bregman divergence (replaces convexity)}
+    \annotate[yshift=-0.5em]{below,left}{bregman}{\small Bregman divergence}
     \annotate[yshift=-1.5em]{below}{prox}{\small proximity to current params}
     \annotate[yshift=-0.5em]{below,right}{edgeeff}{\small effect of edge edit}
 \end{frame}
@@ -592,27 +592,14 @@
 \end{frame}
 
 \begin{frame}{Results: Influence Prediction Accuracy}
-    Correlation between predicted and actual edge influence scores:
-
-    \vspace{0.5cm}
     \begin{center}
-    \begin{tabular}{l c c}
-        \hline
-        \textbf{Method} & \textbf{Correlation} \\
-        \hline
-        GIF (prior work) & $\sim$0.09--0.14 \\
-        \textbf{Ours (full)} & $\sim$\textbf{0.95} \\
-        \quad -- param only & $\sim$0.4--0.6 \\
-        \quad -- msg only & $\sim$0.3--0.5 \\
-        \hline
-    \end{tabular}
+        \includegraphics[width=0.8\linewidth]{figures/edge_influence.pdf}
     \end{center}
-
-    \vspace{0.5cm}
-    \begin{itemize}
-        \item Both components are essential --- low mutual correlation ($<$0.3)
-        \item Consistent across GCN, GAT, ChebNet architectures
-    \end{itemize}
+    \vspace{-0.3cm}
+    \begin{center}
+        {\small Both components are essential --- consistent across GCN, GAT, ChebNet.\\
+        \citet{heo2025influence}}
+    \end{center}
 \end{frame}
 
 \begin{frame}{Edge Influence on a Barbell Graph}
@@ -649,22 +636,203 @@
     \end{itemize}
 \end{frame}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Part 3: Second-Order Group Influence for LLMs
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}{Part 3: Group Influence and Data Interactions}
+    \vfill
+    \begin{center}
+        \Large\textbf{``Which data complement each other, and which interfere?''}
+
+        \vspace{0.5cm}
+        \normalsize
+        Work in progress
+    \end{center}
+    \vfill
+\end{frame}
+
+\begin{frame}{Limitation of First-Order Influence}
+    Let $g_f = \nabla_\theta f(\theta^*)$, $g_S = \nabla_\theta \mathcal{L}_S(\theta^*)$, $H = \nabla_\theta^2 \mathcal{L}(\theta^*)$.
+
+    \vspace{0.3cm}
+    First-order influence is \emph{linear} in the selected subset:
+    \begin{equation}
+        f(\theta_\varepsilon) - f(\theta^*) \approx -\varepsilon \, \eqnmarkbox[blue]{i1gf}{g_f^\top} \eqnmarkbox[red]{i1Hg}{H^{-1} g_S}
+    \end{equation}
+    \annotate[yshift=-1em]{below,left}{i1gf}{\small eval gradient}
+    \annotate[yshift=-1em]{below,right}{i1Hg}{\small preconditioned training gradient}
+
+    \vspace{1cm}
+    \textbf{Problem:} influence of a group $S = \{z_1, \dots, z_m\}$ is just the \remph{sum of individual influences}:
+    $$\mathcal{I}(S) = \sum_{i \in S} \mathcal{I}(z_i)$$
+
+    \pause
+    \vspace{0.3cm}
+    Cannot capture:
+    \begin{itemize}
+        \item \textbf{Redundancy:} two similar points provide diminishing returns
+        \item \textbf{Complementarity:} two points together help more than either alone
+        \item \textbf{Interference:} two points together hurt despite each being helpful
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Second-Order Group Influence}
+    Let $\bar{v} = H^{-1}g_S$, \ $u = H^{-1}g_f$, \ $H_f = \nabla_\theta^2 f(\theta^*)$, \ $H_S = \nabla_\theta^2 \mathcal{L}_S(\theta^*)$.
+
+    \vspace{0.5cm}
+    Include the $\varepsilon^2$ term to capture \emph{interactions}:
+
+    \begin{equation}
+        f(\theta_\varepsilon) - f(\theta^*) \approx
+        \underbrace{-\varepsilon \, g_f^\top \bar{v}}_{\mathcal{I}_1 \text{: first-order}}
+        + \frac{\varepsilon^2}{2}\bigg[
+        \underbrace{\bar{v}^\top H_f \, \bar{v}}_{\mathcal{T}_1 \text{: interaction attribution}}
+        + \underbrace{2\, u^\top H_S \bar{v}}_{\mathcal{T}_2 \text{: curvature correction}}
+        \bigg]
+    \end{equation}
+
+    \vspace{0.5cm}
+    \begin{itemize}
+        \item $\mathcal{T}_1 = \bar{v}^\top H_f \bar{v}$: the first-order parameter shift $\bar{v}$ may \emph{overshoot} or \emph{undershoot} on the evaluation objective --- $H_f$ measures this curvature mismatch
+        \item $\mathcal{T}_2 = 2u^\top H_S \bar{v}$: the group's own curvature $H_S$ deflects the parameter update from the first-order direction --- $u$ measures how much this deflection affects evaluation
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Pairwise Interaction Expansion}
+    Let $v_i = H^{-1}\nabla_\theta \ell(z_i, \theta^*)$. Then $\mathcal{T}_1$ decomposes into pairwise terms:
+
+    \begin{equation}
+        \mathcal{T}_1 = \frac{1}{|S|^2}\sum_{i,j \in S} v_i^\top H_f \, v_j
+    \end{equation}
+
+    \vspace{0.5cm}
+    Each $v_i^\top H_f v_j$ measures how data points $i$ and $j$ \emph{interact} under the evaluation curvature.
+
+    \vspace{0.5cm}
+    This enables:
+    \begin{itemize}
+        \item Detecting \textbf{redundancy}: $v_i^\top H_f v_j > 0$ (diminishing returns)
+        \item Detecting \textbf{complementarity}: $v_i^\top H_f v_j < 0$ (synergy)
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Application: Selecting Synthetic Data for LLM SFT}
+    \textbf{Task:} select complementary synthetic data to add on top of real data.
+
+    \vspace{0.5cm}
+    \textbf{Setup:}
+    \begin{itemize}
+        \item Model: Llama 3.2 3B + LoRA (rank 16)
+        \item Pool: MetaMathQA (395K samples: GSM8K + MATH augmented)
+        \item Evaluation: GSM8K test (1,319 samples)
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Greedy Data Selection}
+    Let $w_i = H_f v_i$. Predicted gain when adding point $j$ to current set $\mathcal{S}$:
+
+    \begin{equation}
+        \Delta f(j) = \underbrace{-\frac{1}{N} g_f^\top v_j}_{\text{first-order}} + \underbrace{\frac{\alpha}{2N^2}\left(2\sum_{i \in \mathcal{S}} w_j^\top v_i + w_j^\top v_j\right)}_{\text{interaction}}
+    \end{equation}
+
+    \vspace{0.5cm}
+    \begin{itemize}
+        \item Precompute $v_i, w_i$ for all pool data
+        \item Each greedy step reduces to dot products
+        \item $\alpha = 0$: reduces to first-order top-K
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Challenge: Reference Model}
+    Influence functions require a reference $\hat{\theta}$ \emph{converged on the training data}.
+
+    \vspace{0.5cm}
+    \textbf{Problem:} base LLM is converged on \remph{pretraining data}, not SFT data.
+
+    \pause
+    \vspace{0.5cm}
+    \textbf{Solution --- Warmup Training:}
+    \begin{enumerate}
+        \item Fine-tune base model on 5\% random subset $\mathcal{T}$ from pool $\Rightarrow \hat{\theta}_{\mathcal{T}}$
+        \item Compute $H$ at $\hat{\theta}_{\mathcal{T}}$
+        \item IF predicts: ``which pool data, \textbf{added on top of} $\mathcal{T}$, would help the most?''
+        \item Greedy-select $\mathcal{S}$ ($\sim$5\%), final fine-tune on $\mathcal{S} \cup \mathcal{T}$ ($\sim$10\%)
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}{Results: $\alpha$ Sweep --- Balancing $\mathcal{I}_1$ and $\mathcal{T}_1$}
+    \begin{center}
+    \begin{tabular}{l c c}
+        \hline
+        \textbf{Method} & \textbf{GSM\%} & \textbf{Acc} \\
+        \hline
+        Greedy $\alpha=0.10$ & 64.8\% & 31.87\% \\
+        \textcolor{green!50!black}{\textbf{Greedy} $\bm{\alpha=0.25}$} & \textcolor{green!50!black}{64.2\%} & \textcolor{green!50!black}{\textbf{33.08\%}} \\
+        Greedy $\alpha=0.50$ & 56.2\% & 32.88\% \\
+        Greedy $\alpha=1.00$ & 50.8\% & 32.15\% \\
+        \hline
+        Random 10\% & 60.9\% & 31.64\% \\
+        $\mathcal{I}_1$ top-K & 65.1\% & 31.40\% \\
+        \hline
+        Full (395K) & 60.8\% & 41.02\% \\
+        \hline
+    \end{tabular}
+    \end{center}
+
+    \vspace{0.3cm}
+    \begin{itemize}
+        \item Best $\alpha = 0.25$: interaction-aware selection outperforms both random and first-order only
+        \item $\alpha = 0$ reduces to $\mathcal{I}_1$ top-K (no interaction awareness)
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{$\mathcal{T}_1$ as a Diversity Mechanism}
+    Higher $\alpha$ (more $\mathcal{T}_1$ weight) $\Rightarrow$ more diverse data source composition:
+
+    \vspace{0.5cm}
+    \begin{center}
+    \begin{tabular}{l c c}
+        \hline
+        & \textbf{GSM data} & \textbf{MATH data} \\
+        \hline
+        $\mathcal{I}_1$ top-K ($\alpha=0$) & 65\% & 35\% \\
+        Greedy $\alpha=0.25$ & 64\% & 36\% \\
+        Greedy $\alpha=0.50$ & 56\% & 44\% \\
+        Greedy $\alpha=1.00$ & 51\% & 49\% \\
+        \hline
+    \end{tabular}
+    \end{center}
+
+    \vspace{0.5cm}
+    \begin{itemize}
+        \item Without $\mathcal{T}_1$: $\mathcal{I}_1$ concentrates on GSM-type data
+        \item With $\mathcal{T}_1$: selects a mix of GSM and MATH data
+        \item $\mathcal{T}_1$ selects MATH data that \emph{transfers} to GSM reasoning --- cross-domain complementarity
+    \end{itemize}
+\end{frame}
+
 \begin{frame}{Summary}
     \begin{itemize}
-        \item \textbf{Part 1:} Influence functions approximate LOO retraining via $\mathcal{I}_\theta(z) = -H^{-1} \nabla L(z)$
-        \vspace{0.2cm}
-        \item In deep learning, this actually approximates the \textbf{PBRF}
-        \vspace{0.2cm}
-        \item \textbf{Part 2:} For GNNs, edge influence decomposes into:
+        \item \textbf{Part 1:} Influence functions approximate LOO retraining
             \begin{itemize}
-                \item Parameter shift (standard IF pathway)
-                \item Message propagation (graph-specific pathway)
+                \item In deep learning $\to$ PBRF with damping and GNH
             \end{itemize}
         \vspace{0.2cm}
-        \item Both components are \emph{essential} --- capturing only one gives poor predictions
+        \item \textbf{Part 2:} Edge influence in GNNs decomposes into parameter shift + message propagation
+            \begin{itemize}
+                \item Both essential; 0.95 correlation vs.\ 0.1 for prior work
+            \end{itemize}
         \vspace{0.2cm}
-        \item Achieved $\sim$0.95 correlation vs.\ $\sim$0.1 for prior work
+        \item \textbf{Part 3:} Second-order group influence captures data interactions
+            \begin{itemize}
+                \item Pairwise interaction term $v_i^\top H_f v_j$ quantifies complementarity/redundancy
+                \item Selects diverse, complementary synthetic data for LLM SFT
+            \end{itemize}
     \end{itemize}
+
+    \vspace{0.5cm}
+    \textbf{Common theme:} moving beyond i.i.d.\ first-order influence to capture \emph{structure} and \emph{interactions} in training data.
 \end{frame}
 
 \begin{frame}[allowframebreaks]{References}
