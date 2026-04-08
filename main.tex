@@ -18,6 +18,7 @@
 
 \setbeamertemplate{navigation symbols}{}
 \setbeamertemplate{footline}[frame number]
+\setbeamertemplate{frametitle}[default][left]
 \renewcommand{\emph}[1]{\textit{\textcolor{blue}{#1}}}
 \newcommand{\remph}[1]{\textit{\textcolor{red}{#1}}}
 
@@ -350,6 +351,296 @@
     
     \vspace{0.5cm}
     Recognizing this allows us to adapt influence functions for highly complex, non-convex, and structured architectures.
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Part 2: Influence Functions for Edge Edits in GNNs
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}{Part 2: Influence of Structured Data}
+    \vfill
+    \begin{center}
+        \Large\textbf{``Influence beyond i.i.d.: when removing one affects many''}
+
+        % \vspace{0.5cm}
+        % \normalsize
+        % \citet{heo2025influence}\\
+        % \textit{NeurIPS 2025}
+    \end{center}
+    \vfill
+\end{frame}
+
+\begin{frame}{The i.i.d.\ Assumption Breaks Down}
+    Part 1 assumed training data are \emph{independent}:
+
+    \vspace{0.3cm}
+    \begin{center}
+        Remove $z_i$ $\Rightarrow$ only $z_i$'s contribution changes.
+    \end{center}
+
+    \pause
+    \vspace{0.5cm}
+    In many real-world settings, data points are \remph{interconnected}:
+
+    \vspace{0.3cm}
+    \begin{itemize}
+        \item \textbf{Graphs:} nodes share information via edges (social networks, molecules, citation graphs)
+        \item \textbf{Sequences:} tokens depend on context (language models)
+        \item \textbf{Groups:} correlated subsets of data (demographic slices, data sources)
+    \end{itemize}
+
+    \pause
+    \vspace{0.5cm}
+    Modifying one element can \remph{cascade} through the structure, affecting many predictions simultaneously.
+\end{frame}
+
+\begin{frame}{GNNs: Message Passing on Graphs}
+    \begin{columns}[c]
+    \begin{column}{0.55\textwidth}
+    \begin{tikzpicture}[
+        scale=0.85,
+        node/.style={circle, draw, thick, minimum size=8mm, font=\small},
+        msg/.style={->, thick, >=stealth, shorten >=2pt, shorten <=2pt},
+    ]
+        % Nodes
+        \node[node, fill=red!20] (v) at (3, 2) {$v$};
+        \node[node, fill=blue!20] (a) at (1, 3.5) {$a$};
+        \node[node, fill=blue!20] (b) at (1, 0.5) {$b$};
+        \node[node, fill=blue!20] (c) at (5, 3.5) {$c$};
+        \node[node, fill=gray!20] (d) at (5, 0.5) {$d$};
+
+        % Edges
+        \draw[thick] (v) -- (a);
+        \draw[thick] (v) -- (b);
+        \draw[thick] (v) -- (c);
+        \draw[thick, red, dashed, line width=1.5pt] (v) -- (d);
+        \draw[thick] (a) -- (b);
+        \draw[thick] (c) -- (d);
+
+        % Messages
+        \draw[msg, blue!70] (a) to[bend right=15] node[left, font=\scriptsize] {$m_a$} (v);
+        \draw[msg, blue!70] (b) to[bend left=15] node[left, font=\scriptsize] {$m_b$} (v);
+        \draw[msg, blue!70] (c) to[bend left=15] node[right, font=\scriptsize] {$m_c$} (v);
+        \draw[msg, red!50, dashed] (d) to[bend right=15] node[right, font=\scriptsize] {$m_d$?} (v);
+
+        % Label
+        \node[below, font=\scriptsize\itshape, red!70!black] at (4, 0.1) {remove this edge?};
+    \end{tikzpicture}
+    \end{column}
+    \begin{column}{0.45\textwidth}
+        Each node updates its embedding by \emph{aggregating messages} from neighbors:
+
+        \vspace{0.3cm}
+        $h_v^{(l+1)} = \sigma\!\left(\sum_{u \in \mathcal{N}(v)} W^{(l)} h_u^{(l)}\right)$
+
+        \vspace{0.5cm}
+        \textbf{Key insight:} removing edge $(v, d)$ changes:
+        \begin{itemize}
+            \item What $v$ ``sees'' (message)
+            \item How $\theta$ is learned (parameter)
+        \end{itemize}
+    \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{What Can We Perturb in Structured Data?}
+    Beyond removing a single data point $z$:
+
+    \vspace{0.5cm}
+    \begin{itemize}
+        \item \textbf{Edge edits:} add or remove a connection $e = (u,v)$ in a graph
+        \item \textbf{Node removal:} remove a node and all its edges
+        \item \textbf{Group removal:} remove a correlated subset of data
+        \item \textbf{Feature perturbation:} modify attributes that propagate through structure
+    \end{itemize}
+
+    \pause
+    \vspace{0.5cm}
+    We start with \textbf{edge edits in GNNs} --- the simplest structural perturbation, but one that the standard influence function framework cannot handle.
+
+    \vspace{0.3cm}
+    \hfill \citet{heo2025influence}, \textit{NeurIPS 2025}
+\end{frame}
+
+\begin{frame}{Why Edge Influence Is Hard}
+    An edge edit affects GNN predictions through \emph{two distinct mechanisms}:
+    An edge edit affects GNN predictions through \emph{two distinct mechanisms}:
+
+    \vspace{0.5cm}
+    \begin{columns}[c]
+    \begin{column}{0.48\textwidth}
+        \centering
+        \textbf{1. Parameter Shift}\\
+        \vspace{0.3cm}
+        Retraining on the modified graph changes the optimal parameters $\theta$.
+
+        \vspace{0.3cm}
+        $\theta^* \to \theta^*_{-e}$
+
+        \vspace{0.3cm}
+        {\small (Same as standard IF)}
+    \end{column}
+    \begin{column}{0.04\textwidth}
+        \centering
+        \Large $+$
+    \end{column}
+    \begin{column}{0.48\textwidth}
+        \centering
+        \textbf{2. Message Propagation}\\
+        \vspace{0.3cm}
+        Removing/adding an edge changes how information flows through the network.
+
+        \vspace{0.3cm}
+        $G \to G \setminus e$
+
+        \vspace{0.3cm}
+        {\small (Unique to graph data)}
+    \end{column}
+    \end{columns}
+
+    \pause
+    \vspace{0.5cm}
+    \centering
+    Prior work (GIF) only captures the first pathway $\Rightarrow$ poor correlation ($\sim$0.1).
+\end{frame}
+
+\begin{frame}{Existing Approach: GIF}
+    Graph Influence Function (GIF) adapts standard IF to graphs, but assumes \remph{convexity}:
+
+    \vspace{0.3cm}
+    \begin{itemize}
+        \item Treats edge removal as a data perturbation
+        \item Ignores the \remph{message propagation effect} of topology changes
+        \item Assumes convex loss $\Rightarrow$ invalid for GNNs
+    \end{itemize}
+
+    \pause
+    \vspace{0.5cm}
+    \textbf{Result:} Correlation between predicted and actual influence $\approx$ 0.09--0.14.
+
+    \vspace{0.5cm}
+    We need a formulation that:
+    \begin{enumerate}
+        \item Handles \emph{non-convex} GNN losses
+        \item Captures \emph{both} parameter shift and message propagation
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}{Our Approach: Edge-Edit PBRF}
+    We extend the \textbf{Proximal Bregman Response Function} to edge edits in GNNs:
+
+    \vspace{0.3cm}
+    \begin{equation}
+        \theta^*_\epsilon := \arg\min_{\theta} \frac{1}{N} \sum_v \eqnmarkbox[blue]{bregman}{D_L(h^G_v, h^{G,\theta_s}_v)} + \eqnmarkbox[red]{prox}{\frac{\lambda}{2}\|\theta - \theta_s\|^2} + \epsilon \sum_v \eqnmarkbox[orange]{edgeeff}{\left(L(h^G_v) - L(h^{G_{-e}}_v)\right)}
+    \end{equation}
+    \annotate[yshift=-0.5em]{below,left}{bregman}{\small Bregman divergence (replaces convexity)}
+    \annotate[yshift=-1.5em]{below}{prox}{\small proximity to current params}
+    \annotate[yshift=-0.5em]{below,right}{edgeeff}{\small effect of edge edit}
+\end{frame}
+
+\begin{frame}{Influence Decomposition}
+    The total influence of an edge $e$ on a prediction $f$ decomposes as:
+
+    \vspace{0.5cm}
+    \begin{equation}
+        \underbrace{\mathcal{I}(e, f)}_{\text{total influence}} = \underbrace{\mathcal{I}_{\text{param}}(e, f)}_{\text{parameter shift}} + \underbrace{\mathcal{I}_{\text{msg}}(e, f)}_{\text{message propagation}}
+    \end{equation}
+
+    \pause
+    \vspace{0.5cm}
+    \textbf{Parameter shift} (requires inverse Hessian):
+    \begin{equation}
+        \mathcal{I}_{\text{param}}(e, f) = \frac{1}{N} \nabla_\theta f^\top \, G^{-1} \sum_v \left(\nabla_\theta L(h^G_v) - \nabla_\theta L(h^{G_{-e}}_v)\right)
+    \end{equation}
+
+    \pause
+    \vspace{0.3cm}
+    \textbf{Message propagation} (direct topology effect):
+    \begin{equation}
+        \mathcal{I}_{\text{msg}}(e, f) = (2 \cdot \mathbf{1}[e \in E] - 1)\left(\frac{\partial f}{\partial A_{uv}} + \frac{\partial f}{\partial A_{vu}}\right)
+    \end{equation}
+\end{frame}
+
+\begin{frame}{Generalized Gauss-Newton Hessian}
+    For non-convex GNNs, we approximate the Hessian using:
+
+    \vspace{0.5cm}
+    \begin{equation}
+        G = \eqnmarkbox[red]{gjac1}{J_{h\theta}^\top} \eqnmarkbox[blue]{gHL}{H_h} \eqnmarkbox[red]{gjac2}{J_{h\theta}} + \eqnmarkbox[violet]{glambda}{\lambda I}
+    \end{equation}
+    \annotatetwo[yshift=-1em]{below}{gjac1}{gjac2}{\small Jacobian of node embeddings w.r.t.\ $\theta$}
+    \annotate[yshift=1em]{above}{gHL}{\small Hessian of loss w.r.t.\ embeddings}
+    \annotate[yshift=1em]{above,right}{glambda}{\small damping}
+
+    \vspace{0.8cm}
+    \begin{itemize}
+        \item Guaranteed positive semi-definite $\Rightarrow$ no convexity needed
+        \item Inverse approximated via \textbf{LiSSA} for scalability
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Results: Influence Prediction Accuracy}
+    Correlation between predicted and actual edge influence scores:
+
+    \vspace{0.5cm}
+    \begin{center}
+    \begin{tabular}{l c c}
+        \hline
+        \textbf{Method} & \textbf{Correlation} \\
+        \hline
+        GIF (prior work) & $\sim$0.09--0.14 \\
+        \textbf{Ours (full)} & $\sim$\textbf{0.95} \\
+        \quad -- param only & $\sim$0.4--0.6 \\
+        \quad -- msg only & $\sim$0.3--0.5 \\
+        \hline
+    \end{tabular}
+    \end{center}
+
+    \vspace{0.5cm}
+    \begin{itemize}
+        \item Both components are essential --- low mutual correlation ($<$0.3)
+        \item Consistent across GCN, GAT, ChebNet architectures
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Applications}
+    \textbf{1. Adversarial Attack Detection}
+    \begin{itemize}
+        \item Identifies edges most harmful to model accuracy
+        \item Outperforms DICE and PRBCD baselines
+    \end{itemize}
+
+    \vspace{0.3cm}
+    \textbf{2. Graph Rewiring Analysis}
+    \begin{itemize}
+        \item Reveals unintended side effects of existing rewiring strategies (e.g., BORF)
+        \item Quantifies trade-offs of topology modifications
+    \end{itemize}
+
+    \vspace{0.3cm}
+    \textbf{3. Over-squashing \& Over-smoothing}
+    \begin{itemize}
+        \item Predicts which edges contribute to information bottlenecks
+        \item Measures impact on Dirichlet energy
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Summary}
+    \begin{itemize}
+        \item \textbf{Part 1:} Influence functions approximate LOO retraining via $\mathcal{I}_\theta(z) = -H^{-1} \nabla L(z)$
+        \vspace{0.2cm}
+        \item In deep learning, this actually approximates the \textbf{PBRF}
+        \vspace{0.2cm}
+        \item \textbf{Part 2:} For GNNs, edge influence decomposes into:
+            \begin{itemize}
+                \item Parameter shift (standard IF pathway)
+                \item Message propagation (graph-specific pathway)
+            \end{itemize}
+        \vspace{0.2cm}
+        \item Both components are \emph{essential} --- capturing only one gives poor predictions
+        \vspace{0.2cm}
+        \item Achieved $\sim$0.95 correlation vs.\ $\sim$0.1 for prior work
+    \end{itemize}
 \end{frame}
 
 \begin{frame}[allowframebreaks]{References}
