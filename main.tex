@@ -12,8 +12,12 @@
 \usepackage{graphicx}
 \usepackage{bm}
 \usepackage{tikz}
+\usepackage[backend=bibtex, style=authoryear, natbib=true, maxcitenames=2]{biblatex}
+\addbibresource{references.bib}
 
 \setbeamertemplate{navigation symbols}{}
+\renewcommand{\emph}[1]{\textit{\textcolor{blue}{#1}}}
+\newcommand{\remph}[1]{\textit{\textcolor{red}{#1}}}
 
 % Title information
 \title[Influence Functions]{Understanding Influence Functions: \\ From Edge Edits in Graphs to Group Influence in LLMs}
@@ -36,17 +40,93 @@
     \end{tikzpicture}
 \end{frame}
 
-\begin{frame}
+\begin{frame}{Part 1: The Theory of Influence Functions} 
     \vfill
     \begin{center}
+        
+        \bigskip
+        
         \Large\textbf{``What would have happened without this data point\thinspace?''}
     \end{center}
     \vfill
 \end{frame}
 
+% Application slides
+\begin{frame}{Application: Model Interpretability}
+    \begin{center}
+        \includegraphics[height=0.65\textheight]{figures/app_interpretability.png}
+    \end{center}
+    \vspace{-0.3cm}
+    \begin{center}
+        {\small Which training examples were most helpful or harmful for a prediction?\\
+        \textit{--- \citet{koh2017understanding}}}
+    \end{center}
+\end{frame}
+% Notes: Figure 4 from Koh & Liang (2017). Left: Inception vs RBF SVM scatter plot of
+% influence scores vs Euclidean distance. Green dots = fish, red dots = dogs.
+% Bottom right: The two most helpful training images for each model on the test image (a dog).
+% Top right: An image of a dog in the training set that helped the Inception model correctly
+% classify the test image as a fish. Key point: Inception picks up on pattern-matched features
+% (clownfish patterns), while RBF SVM relies on raw pixel distance.
+
+\begin{frame}{Application: Data Poisoning Attacks}
+    \begin{center}
+        \includegraphics[height=0.55\textheight]{figures/app_poisoning.png}
+    \end{center}
+    \vspace{-0.3cm}
+    \begin{center}
+        {\small A small, visually-indistinguishable perturbation to a single training image\\
+        can flip the model's prediction on multiple test images.\\
+        \textit{--- \citet{koh2017understanding}}}
+    \end{center}
+\end{frame}
+% Notes: Figure 5 from Koh & Liang (2017). Training-set attack demonstration.
+% A small perturbation (+epsilon) is added to a single training image, making it
+% visually indistinguishable from the original. This perturbation is crafted using
+% influence functions to maximize the average loss over a set of 30 test images.
+% Result: the attack flipped predictions on 16 of 30 test images (57%).
+% Key point: influence functions reveal which training points are most vulnerable,
+% enabling both stronger attacks and better defenses.
+
+\begin{frame}{Application: Fixing Mislabeled Data}
+    \begin{center}
+        \includegraphics[height=0.55\textheight]{figures/app_mislabeled.png}
+    \end{center}
+    \vspace{-0.3cm}
+    \begin{center}
+        {\small Using influence to prioritize which labels to check outperforms\\
+        random inspection and loss-based selection.\\
+        \textit{--- \citet{koh2017understanding}}}
+    \end{center}
+\end{frame}
+% Notes: Figure 6 from Koh & Liang (2017). Fixing mislabeled examples on the Enron spam dataset.
+% Left plot: test accuracy vs fraction of training data checked. Influence-based selection (blue)
+% finds mislabeled points much faster than random (red) or loss-based (green) selection.
+% Right plot: fraction of flipped labels detected vs fraction checked — same trend.
+% 10% of training labels were randomly flipped. Using influence to prioritize which points
+% to inspect allows repairing the dataset without checking too many points.
+
+\begin{frame}{Application: Understanding LLM Generalization}
+    \begin{center}
+        \includegraphics[height=0.7\textheight]{figures/app_llm_influence.png}
+    \end{center}
+    \vspace{-0.3cm}
+    \begin{center}
+        {\small Tracing an LLM's response back to its most influential training sequences.\\
+        \textit{--- \citet{grosse2023studying}}}
+    \end{center}
+\end{frame}
+% Notes: Figure from Grosse et al. (2023), Anthropic. Query: "shutdown" — the model is asked
+% whether it consents to being shut down. The completion expresses a desire to continue existing.
+% The top influential training sequences for a 52B parameter model are shown with color-coded
+% token highlighting (green = high positive influence, red = high negative influence).
+% Key finding: at large scale, influential sequences are thematically related (survival instinct,
+% desire to continue living) rather than sharing surface-level token overlap.
+% This demonstrates that LLMs generalize abstractly from training data, not via memorization.
+
 % Slide 2: Motivation
 \begin{frame}{Motivation: The ``Leave-One-Out" Problem}
-    \textbf{Core Question:} How does a single training data point affect our model's predictions?
+    \textbf{Core Question:} How does \remph{a single training data point} affect our model's predictions?
     
     \pause
     \vspace{0.5cm}
@@ -63,7 +143,7 @@
     
     \pause
     \vspace{0.5cm}
-    \textbf{The Problem:} Retraining a modern neural network for every single training point is computationally impossible. We need an efficient approximation.
+    \textbf{The Problem:} Retraining a modern neural network for every single training point is \emph{computationally impossible}. We need an efficient approximation.
 \end{frame}
 
 % Slide 3: Empirical Risk Minimization
@@ -107,7 +187,7 @@
     Often, we care more about how removing a training point $z$ affects the loss on a specific test point $z_{\text{test}}$.
     
     \vspace{0.5cm}
-    Using the chain rule, we can compute the influence of upweighting $z$ on the test loss $L(z_{\text{test}}, \hat{\theta})$[cite: 89, 90]:
+    Using the chain rule, we can compute the influence of upweighting $z$ on the test loss $L(z_{\text{test}}, \hat{\theta})$ \citep{koh2017understanding}:
     
     \begin{align}
         \mathcal{I}_{\text{up, loss}}(z, z_{\text{test}}) &= \left. \frac{d}{d\epsilon} L(z_{\text{test}}, \hat{\theta}_{\epsilon, z}) \right|_{\epsilon=0} \nonumber \\
@@ -116,7 +196,7 @@
     \end{align}
     
     \vspace{0.3cm}
-    Removing $z$ from the training set is approximated by setting $\epsilon = -1/n$[cite: 82, 92].
+    Removing $z$ from the training set is approximated by setting $\epsilon = -1/n$ \citep{koh2017understanding}.
 \end{frame}
 
 \begin{frame}{Influence vs.\ Leave-One-Out Retraining}
@@ -124,12 +204,14 @@
         \includegraphics[height=0.7\textheight]{figures/correlation1.pdf}
     \end{center}
     \vspace{-0.3cm}
-    {\small Correlation between influence function estimates and actual LOO retraining effects.}
+    \begin{center}
+        {\small Correlation between influence function estimates and actual LOO retraining effects.}
+    \end{center}
 \end{frame}
 
 % Slide 6: Key Applications
 \begin{frame}{Key Applications of Influence Functions}
-    With this closed form approximation, we unlock several powerful capabilities in machine learning[cite: 861]:
+    With this closed form approximation, we unlock several powerful capabilities in machine learning \citep{koh2017understanding}:
     
     \vspace{0.5cm}
     \begin{enumerate}
@@ -147,8 +229,8 @@
     
     \vspace{0.3cm}
     \begin{itemize}
-        \item \textbf{Computational Cost:} Storing and inverting the exact Hessian matrix requires $O(d^3)$ operations, which is infeasible for millions of parameters[cite: 94, 938].
-        \item \textbf{Non Convexity:} Neural networks have non convex loss landscapes[cite: 13, 27]. The Hessian is often singular or contains negative eigenvalues, violating the strict convexity assumption[cite: 93, 942].
+        \item \textbf{Computational Cost:} Storing and inverting the exact Hessian matrix requires $O(d^3)$ operations, which is infeasible for millions of parameters \citep{koh2017understanding, agarwal2017second}.
+        \item \textbf{Non Convexity:} Neural networks have non convex loss landscapes. The Hessian is often singular or contains negative eigenvalues, violating the strict convexity assumption \citep{basu2021influence}.
         \item \textbf{Structural Complexity:} Standard influence functions assume independent, identically distributed data points. 
     \end{itemize}
 
@@ -186,7 +268,7 @@
 
 % Slide 9: The Quadratic Approximation Fix
 \begin{frame}{Addressing Non Convexity and Non Convergence}
-    To extract meaningful influence estimates despite these issues, Koh and Liang (2017) proposed forming a \textbf{convex quadratic approximation} of the loss around the current parameters $\tilde{\theta}$.
+    To extract meaningful influence estimates despite these issues, \citet{koh2017understanding} proposed forming a \textbf{convex quadratic approximation} of the loss around the current parameters $\tilde{\theta}$.
     
     \vspace{0.3cm}
     They approximate the loss $\tilde{L}(z, \theta)$ as:
@@ -207,7 +289,7 @@
     While the damped quadratic approximation ($\lambda I$) makes the math solvable, it is still a blunt instrument for highly complex models.
     
     \vspace{0.5cm}
-    Recent studies show that simply adding $\lambda I$ to non converged models means the influence function is actually approximating a different objective: the \textbf{Proximal Bregman Response Function (PBRF)}.
+    Recent studies show that simply adding $\lambda I$ to non converged models means the influence function is actually approximating a different objective: the \textbf{Proximal Bregman Response Function (PBRF)} \citep{bae2022if}.
     
     \vspace{0.3cm}
     Instead of just predicting a theoretical "Leave One Out" retraining, the PBRF asks:
@@ -243,7 +325,7 @@
     If influence functions in deep learning do not predict LOO retraining from scratch, what do they predict?
     
     \vspace{0.5cm}
-    Recent research shows that they actually approximate the \textbf{Proximal Bregman Response Function (PBRF)}.
+    Recent research shows that they actually approximate the \textbf{Proximal Bregman Response Function (PBRF)} \citep{bae2022if}.
     
     \vspace{0.3cm}
     Instead of asking "What happens if we retrain without $z$?", the PBRF asks:
@@ -253,6 +335,10 @@
     
     \vspace{0.5cm}
     Recognizing this allows us to adapt influence functions for highly complex, non-convex, and structured architectures.
+\end{frame}
+
+\begin{frame}[allowframebreaks]{References}
+    \printbibliography[heading=none]
 \end{frame}
 
 \end{document}
