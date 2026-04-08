@@ -44,14 +44,6 @@
     \vfill
 \end{frame}
 
-% \begin{frame}{Motivation}
-%     \begin{center}
-%         \includegraphics[width=\textwidth]{figures/influence_fn.png}
-%     \end{center}
-% \end{frame}
-
-
-
 % Slide 2: Motivation
 \begin{frame}{Motivation: The ``Leave-One-Out" Problem}
     \textbf{Core Question:} How does a single training data point affect our model's predictions?
@@ -62,7 +54,7 @@
     
     \pause
     \vspace{0.5cm}
-    \textbf{The Naive Approach (Leave-One-Out Retraining):}
+    \textbf{The Naive Approach (Leave-One-Out (LOO) Retraining):}
     \begin{itemize}
         \item Remove the target data point $z$ from the training set.
         \item Retrain the model entirely from scratch.
@@ -125,6 +117,14 @@
     
     \vspace{0.3cm}
     Removing $z$ from the training set is approximated by setting $\epsilon = -1/n$[cite: 82, 92].
+\end{frame}
+
+\begin{frame}{Influence vs.\ Leave-One-Out Retraining}
+    \begin{center}
+        \includegraphics[height=0.7\textheight]{figures/correlation1.pdf}
+    \end{center}
+    \vspace{-0.3cm}
+    {\small Correlation between influence function estimates and actual LOO retraining effects.}
 \end{frame}
 
 % Slide 6: Key Applications
