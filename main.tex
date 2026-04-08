@@ -183,51 +183,85 @@
 \end{frame}
 
 \begin{frame}{Visualizing the Influence Function (1D)}
-    \begin{center}
-    \begin{tikzpicture}[scale=0.9, >=stealth]
+    \begin{columns}[c]
+    \begin{column}{0.58\textwidth}
+    \begin{tikzpicture}[scale=0.8, >=stealth]
         % Axes
         \draw[->] (-0.5, 0) -- (8.5, 0) node[right] {$\theta$};
         \draw[->] (0, -0.3) -- (0, 5.5) node[above] {Loss};
 
+        % L(z, theta): the individual loss for data point z, minimum at theta=1.5
+        % This is the loss we upweight by epsilon
+        % R(theta) = 0.18*(theta-4)^2 + 0.8
+        % L(z,theta) = 0.3*(theta-1.5)^2 + 0.5
+        % Combined: R + eps*L, minimum at (0.18*4 + eps*0.3*1.5)/(0.18 + eps*0.3)
+        %   eps=0:   min at 4.0
+        %   eps=0.15: min at (0.72+0.0675)/(0.18+0.045) = 0.7875/0.225 = 3.5
+        %   eps=0.3: min at (0.72+0.135)/(0.18+0.09) = 0.855/0.27 = 3.167
+        %   eps=0.5: min at (0.72+0.225)/(0.18+0.15) = 0.945/0.33 = 2.864
+        %   eps=0.8: min at (0.72+0.36)/(0.18+0.24) = 1.08/0.42 = 2.571
+
         % Original empirical risk: R(theta) with minimum at theta=4
-        \draw[thick, blue!70!black, domain=0.5:7.8, smooth, samples=80]
-            plot (\x, {0.18*(\x-4)^2 + 0.8})
-            node[right, blue!70!black] {};
-        \node[blue!70!black, above right] at (7, 3.5) {$\frac{1}{n}\sum_i L(z_i, \theta)$};
+        \draw[very thick, blue!70!black, domain=0.5:7.8, smooth, samples=80]
+            plot (\x, {0.18*(\x-4)^2 + 0.8});
+        \node[blue!70!black] at (7.5, 3.2) {\small $\epsilon=0$};
 
-        % Upweighted risk: R(theta) + epsilon * L(z, theta), shifted minimum to ~3.0
+        % epsilon = 0.15
+        \draw[thick, red!30!white, domain=0.5:7.8, smooth, samples=80]
+            plot (\x, {(0.18*(\x-4)^2 + 0.8) + 0.15*(0.3*(\x-1.5)^2 + 0.5)});
+
+        % epsilon = 0.3
+        \draw[thick, red!50!white, domain=0.5:7.8, smooth, samples=80]
+            plot (\x, {(0.18*(\x-4)^2 + 0.8) + 0.3*(0.3*(\x-1.5)^2 + 0.5)});
+
+        % epsilon = 0.5
         \draw[thick, red!70!black, domain=0.5:7.8, smooth, samples=80]
-            plot (\x, {0.22*(\x-3.0)^2 + 1.1})
-            node[right, red!70!black] {};
-        \node[red!70!black, above left] at (1.2, 4.0) {$\frac{1}{n}\sum_i L(z_i, \theta) + \epsilon L(z, \theta)$};
+            plot (\x, {(0.18*(\x-4)^2 + 0.8) + 0.5*(0.3*(\x-1.5)^2 + 0.5)});
 
-        % Mark hat{theta} (original minimum)
+        % epsilon = 0.8
+        \draw[thick, red!90!black, domain=0.5:7.8, smooth, samples=80]
+            plot (\x, {(0.18*(\x-4)^2 + 0.8) + 0.8*(0.3*(\x-1.5)^2 + 0.5)});
+        \node[red!90!black] at (7.5, 5.2) {\small $\epsilon=0.8$};
+
+        % Mark original minimum (epsilon=0)
         \fill[blue!70!black] (4, 0.8) circle (3pt);
-        \draw[dashed, blue!70!black] (4, 0) -- (4, 0.8);
+        \draw[dashed, gray] (4, 0) -- (4, 0.8);
         \node[below, blue!70!black] at (4, -0.05) {$\hat{\theta}$};
 
-        % Mark hat{theta}_{epsilon,z} (new minimum)
-        \fill[red!70!black] (3.0, 1.1) circle (3pt);
-        \draw[dashed, red!70!black] (3.0, 0) -- (3.0, 1.1);
-        \node[below, red!70!black] at (3.0, -0.05) {$\hat{\theta}_{\epsilon,z}$};
+        % Mark shifted minima for each epsilon
+        \fill[red!30!white] (3.5, 1.3375) circle (2.5pt);
+        \fill[red!50!white] (3.167, 1.725) circle (2.5pt);
+        \fill[red!70!black] (2.864, 2.043) circle (2.5pt);
+        \fill[red!90!black] (2.571, 2.388) circle (2.5pt);
 
-        % Influence arrow between the two minima
-        \draw[<->, thick, black!60!green, line width=1.2pt] (3.05, 0.45) -- (3.95, 0.45);
-        \node[above, black!60!green] at (3.5, 0.45) {$\epsilon \cdot \mathcal{I}_{\text{up}}(z)$};
+        % Linear approximation line through the minima
+        % At eps=0, theta*=4, loss_at_min=0.8
+        % Slope in theta: d(theta*)/d(eps) at eps=0 = -0.3*(4-1.5)/0.18 = -4.17
+        % So linear approx: theta*(eps) = 4 - 4.17*eps
+        \draw[thick, black!60!green, dashed, domain=0:0.85, samples=2]
+            plot ({4 - 4.17*\x}, {0.8 + 2.0*\x});
+        \node[black!60!green, right] at (0.8, 2.6) {\small linear approx.};
 
-        % Tangent line at hat{theta} on the upweighted loss (showing linear approx)
-        \draw[dashed, orange, thick, domain=2.0:5.5, samples=2]
-            plot (\x, {0.44*(4-3.0)*(\x - 4) + 0.22*(4-3.0)^2 + 1.1});
-        \node[orange, right] at (5.5, 2.3) {\small linear approx.};
+        % Increasing epsilon arrow
+        \draw[->, thick, gray] (7.3, 3.5) -- (7.3, 5.0);
+        \node[gray, right] at (7.3, 4.25) {\small $\epsilon$};
     \end{tikzpicture}
-    \end{center}
-
-    \vspace{-0.2cm}
-    \begin{itemize}
-        \item \textcolor{blue!70!black}{Blue}: original empirical risk, minimized at $\hat{\theta}$
-        \item \textcolor{red!70!black}{Red}: upweighted loss (adding $\epsilon \, L(z, \theta)$), minimized at $\hat{\theta}_{\epsilon,z}$
-        \item The \textcolor{black!60!green}{shift} is approximated by the influence function without retraining
-    \end{itemize}
+    \end{column}
+    \begin{column}{0.42\textwidth}
+        \begin{itemize}
+            \item \textcolor{blue!70!black}{\textbf{Blue}}: original risk $R(\theta)$ at $\epsilon=0$
+            \vspace{0.2cm}
+            \item \textcolor{red!70!black}{\textbf{Red curves}}: $R(\theta) + \epsilon L(z,\theta)$ for increasing $\epsilon$
+            \vspace{0.2cm}
+            \item \textcolor{red!70!black}{\textbf{Dots}}: true minimum $\hat{\theta}_{\epsilon,z}$ for each $\epsilon$
+            \vspace{0.2cm}
+            \item \textcolor{black!60!green}{\textbf{Dashed green}}: first-order influence approximation
+            $$\hat{\theta}_{\epsilon,z} \approx \hat{\theta} + \epsilon \cdot \mathcal{I}_{\text{up}}(z)$$
+            \vspace{0.1cm}
+            \item Accurate for small $\epsilon$, diverges for large $\epsilon$
+        \end{itemize}
+    \end{column}
+    \end{columns}
 \end{frame}
 
 \begin{frame}{Approximating Leave-One-Out}
