@@ -250,44 +250,48 @@
     \vspace{0.3cm}
     \begin{itemize}
         \item \textbf{Computational Cost:} Storing and inverting the exact Hessian matrix requires \emph{$O(d^3)$} operations, which is infeasible for millions of parameters \citep{koh2017understanding, agarwal2017second}.
+        \pause
         \item \textbf{Non Convexity:} Neural networks have non convex loss landscapes. The Hessian is often \emph{singular or contains negative eigenvalues}, violating the strict convexity assumption \citep{basu2021influence}.
+        \pause
+        \item \textbf{Non-Convergence:} We rarely train neural networks to a true local minimum (e.g., we use early stopping). Therefore, the assumption that the gradient \emph{$\nabla_{\theta} L(\hat{\theta}) = 0$ is violated.}
+        \pause
         \item \textbf{Structural Complexity:} Standard influence functions assume independent, identically distributed data points. 
     \end{itemize}
 
 \end{frame}
 
-% Slide 8: The Reality of Deep Learning
-\begin{frame}{Influence Functions in Deep Learning}
-    When we apply classical influence functions to deep neural networks, the theoretical guarantees often break down. Why?
+% % Slide 8: The Reality of Deep Learning
+% \begin{frame}{Influence Functions in Deep Learning}
+%     When we apply classical influence functions to deep neural networks, the theoretical guarantees often break down. Why?
     
-    \vspace{0.3cm}
-    \begin{itemize}
-        \item \textbf{Non-Convexity:} The loss landscape is highly non-convex. The Hessian $H_{\hat{\theta}}$ often has negative eigenvalues, meaning it is not Positive Definite and might not be invertible.
-        \vspace{0.2cm}
-        \item \textbf{Non-Convergence:} We rarely train neural networks to a true local minimum (e.g., we use early stopping). Therefore, the assumption that the gradient $\nabla_{\theta} L(\hat{\theta}) = 0$ is violated.
-    \end{itemize}
+%     \vspace{0.3cm}
+%     \begin{itemize}
+%         \item \textbf{Non-Convexity:} The loss landscape is highly non-convex. The Hessian $H_{\hat{\theta}}$ often has negative eigenvalues, meaning it is not Positive Definite and might not be invertible.
+%         \vspace{0.2cm}
+%         \item \textbf{Non-Convergence:} We rarely train neural networks to a true local minimum (e.g., we use early stopping). Therefore, the assumption that the gradient $\nabla_{\theta} L(\hat{\theta}) = 0$ is violated.
+%     \end{itemize}
     
-    \vspace{0.5cm}
-    \textbf{The Result:} In deep learning, standard influence function estimates often fail to accurately predict the true parameter changes of Leave-One-Out (LOO) retraining.
-\end{frame}
+%     \vspace{0.5cm}
+%     \textbf{The Result:} In deep learning, standard influence function estimates often fail to accurately predict the true parameter changes of Leave-One-Out (LOO) retraining.
+% \end{frame}
 
 % Slide 8: The Reality of Deep Learning
-\begin{frame}{Influence Functions in Practice}
-    When applying classical influence functions to deep neural networks, the foundational assumptions break down:
+% \begin{frame}{Influence Functions in Practice}
+%     When applying classical influence functions to deep neural networks, the foundational assumptions break down:
     
-    \vspace{0.3cm}
-    \begin{itemize}
-        \item \textbf{Non Convergence:} We use early stopping or stochastic gradient descent (SGD), meaning our parameters $\tilde{\theta}$ are not the true global minimum ($\tilde{\theta} \neq \hat{\theta}$). The gradient is not zero.
-        \vspace{0.2cm}
-        \item \textbf{Non Convexity:} Neural network loss landscapes are highly non convex. As a result, the Hessian evaluated at our current parameters, $H_{\tilde{\theta}}$, could have negative eigenvalues.
-    \end{itemize}
+%     \vspace{0.3cm}
+%     \begin{itemize}
+%         \item \textbf{Non Convergence:} We use early stopping or stochastic gradient descent (SGD), meaning our parameters $\tilde{\theta}$ are not the true global minimum ($\tilde{\theta} \neq \hat{\theta}$). The gradient is not zero.
+%         \vspace{0.2cm}
+%         \item \textbf{Non Convexity:} Neural network loss landscapes are highly non convex. As a result, the Hessian evaluated at our current parameters, $H_{\tilde{\theta}}$, could have negative eigenvalues.
+%     \end{itemize}
     
-    \vspace{0.5cm}
-    If the Hessian has negative eigenvalues, it is not positive definite, making the inverse $H_{\tilde{\theta}}^{-1}$ unstable or physically meaningless for optimization.
-\end{frame}
+%     \vspace{0.5cm}
+%     If the Hessian has negative eigenvalues, it is not positive definite, making the inverse $H_{\tilde{\theta}}^{-1}$ unstable or physically meaningless for optimization.
+% \end{frame}
 
 % Slide 9: The Quadratic Approximation Fix
-\begin{frame}{Addressing Non Convexity and Non Convergence}
+\begin{frame}{Addressing Non-Convexity and Non-Convergence}
     \citet{koh2017understanding}: form a \textbf{convex quadratic approximation} around $\tilde{\theta}$:
 
     \begin{equation}
@@ -301,21 +305,25 @@
     The damping $\lambda I$ ensures $(H_{\tilde{\theta}} + \lambda I) \succ 0$, making the approximation a convex bowl.
 \end{frame}
 
-% Slide 10: The Limitation and the Next Step
-\begin{frame}{From Quadratic Approximations to PBRF}
-    While the damped quadratic approximation ($\lambda I$) makes the math solvable, it is still a blunt instrument for highly complex models.
-    
-    \vspace{0.5cm}
-    Recent studies show that simply adding $\lambda I$ to non converged models means the influence function is actually approximating a different objective: the \textbf{Proximal Bregman Response Function (PBRF)} \citep{bae2022if}.
-    
-    \vspace{0.3cm}
-    Instead of just predicting a theoretical "Leave One Out" retraining, the PBRF asks:
-    \begin{quote}
-        "What is the effect of removing $z$, if we heavily penalize the model for altering its current predictions on the rest of the dataset?"
-    \end{quote}
-    
-    \vspace{0.5cm}
-    \textit{This realization provides the perfect foundation for our work on Graph Neural Networks, where preserving the surrounding structural predictions is critical.}
+\begin{frame}{Do Influence Functions Work in Practice?}
+    \begin{center}
+        \includegraphics[width=\linewidth]{figures/fragile.pdf}
+    \end{center}
+    \vspace{-0.3cm}
+    \begin{center}
+        {\small \citet{basu2021influence}}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Do Influence Functions Work in Practice?}
+    \begin{center}
+        \includegraphics[width=\linewidth]{figures/fragile_exp.pdf}
+    \end{center}
+    \vspace{-0.3cm}
+    \begin{center}
+        {\small Influence estimates are accurate only for top influential points and with weight decay.\\
+        \citet{basu2021influence}}
+    \end{center}
 \end{frame}
 
 % Slide 9: Addressing Non-Convexity
@@ -329,10 +337,12 @@
 
     \vspace{0.5cm}
     \textbf{2. Gauss-Newton Hessian (GNH):} Guaranteed PSD approximation.
+    \vspace{1.5em}
     \begin{equation}
         G = \eqnmarkbox[red]{jac1}{J_{y\theta}^\top} \eqnmarkbox[blue]{lossH}{H_y} \eqnmarkbox[red]{jac2}{J_{y\theta}}
     \end{equation}
-    \annotatetwo[yshift=-1em]{below}{jac1}{jac2}{\small Jacobian of network outputs w.r.t.\ parameters}
+    % \annotatetwo[yshift=-3em]{below}{jac1}{m}
+    \annotate[yshift=-1em]{below,left}{jac2}{\small Jacobian of network outputs w.r.t.\ parameters}
     \annotate[yshift=1em]{above}{lossH}{\small Hessian of loss w.r.t.\ outputs}
 \end{frame}
 
@@ -466,7 +476,6 @@
 
 \begin{frame}{Why Edge Influence Is Hard}
     An edge edit affects GNN predictions through \emph{two distinct mechanisms}:
-    An edge edit affects GNN predictions through \emph{two distinct mechanisms}:
 
     \vspace{0.5cm}
     \begin{columns}[c]
@@ -482,6 +491,7 @@
         \vspace{0.3cm}
         {\small (Same as standard IF)}
     \end{column}
+    \pause
     \begin{column}{0.04\textwidth}
         \centering
         \Large $+$
@@ -566,12 +576,12 @@
 \begin{frame}{Generalized Gauss-Newton Hessian}
     For non-convex GNNs, we approximate the Hessian using:
 
-    \vspace{0.5cm}
+    \vspace{1.2cm}
     \begin{equation}
         G = \eqnmarkbox[red]{gjac1}{J_{h\theta}^\top} \eqnmarkbox[blue]{gHL}{H_h} \eqnmarkbox[red]{gjac2}{J_{h\theta}} + \eqnmarkbox[violet]{glambda}{\lambda I}
     \end{equation}
-    \annotatetwo[yshift=-1em]{below}{gjac1}{gjac2}{\small Jacobian of node embeddings w.r.t.\ $\theta$}
-    \annotate[yshift=1em]{above}{gHL}{\small Hessian of loss w.r.t.\ embeddings}
+    \annotate[yshift=-1em]{below,left}{gjac2}{\small Jacobian of node embeddings w.r.t.\ $\theta$}
+    \annotate[yshift=2.2em]{above}{gHL}{\small Hessian of loss w.r.t.\ embeddings}
     \annotate[yshift=1em]{above,right}{glambda}{\small damping}
 
     \vspace{0.8cm}
@@ -603,6 +613,18 @@
         \item Both components are essential --- low mutual correlation ($<$0.3)
         \item Consistent across GCN, GAT, ChebNet architectures
     \end{itemize}
+\end{frame}
+
+\begin{frame}{Edge Influence on a Barbell Graph}
+    \begin{center}
+        \includegraphics[width=0.85\linewidth]{figures/gnn_edge_influence.pdf}
+    \end{center}
+    \vspace{-0.3cm}
+    \begin{center}
+        {\small \textcolor{blue}{Blue}: beneficial edges, \textcolor{red}{Red}: harmful edges.\\
+        Edges connecting clusters mitigate over-squashing but amplify over-smoothing.\\
+        \citet{heo2025influence}}
+    \end{center}
 \end{frame}
 
 \begin{frame}{Applications}
