@@ -229,19 +229,19 @@
     \end{center}
 \end{frame}
 
-% Slide 6: Key Applications
-\begin{frame}{Key Applications of Influence Functions}
-    With this closed form approximation, we unlock several powerful capabilities in machine learning \citep{koh2017understanding}:
+% % Slide 6: Key Applications
+% \begin{frame}{Key Applications of Influence Functions}
+%     With this closed form approximation, we unlock several powerful capabilities in machine learning \citep{koh2017understanding}:
     
-    \vspace{0.5cm}
-    \begin{enumerate}
-        \item \textbf{Model Interpretability:} We can explain a model's prediction on $z_{\text{test}}$ by tracing it back to the most influential training samples.
-        \vspace{0.2cm}
-        \item \textbf{Identifying Mislabeled Data:} Training points with highly negative influence on the validation set are often mislabeled or harmful to generalization.
-        \vspace{0.2cm}
-        \item \textbf{Adversarial Robustness:} Influence functions can be used to craft stronger data poisoning attacks or, conversely, to detect and sanitize poisoned data.
-    \end{enumerate}
-\end{frame}
+%     \vspace{0.5cm}
+%     \begin{enumerate}
+%         \item \textbf{Model Interpretability:} We can explain a model's prediction on $z_{\text{test}}$ by tracing it back to the most influential training samples.
+%         \vspace{0.2cm}
+%         \item \textbf{Identifying Mislabeled Data:} Training points with highly negative influence on the validation set are often mislabeled or harmful to generalization.
+%         \vspace{0.2cm}
+%         \item \textbf{Adversarial Robustness:} Influence functions can be used to craft stronger data poisoning attacks or, conversely, to detect and sanitize poisoned data.
+%     \end{enumerate}
+% \end{frame}
 
 % Slide 7: Challenges in Modern Deep Learning
 \begin{frame}{Challenges in Modern Architectures}
@@ -249,8 +249,8 @@
     
     \vspace{0.3cm}
     \begin{itemize}
-        \item \textbf{Computational Cost:} Storing and inverting the exact Hessian matrix requires $O(d^3)$ operations, which is infeasible for millions of parameters \citep{koh2017understanding, agarwal2017second}.
-        \item \textbf{Non Convexity:} Neural networks have non convex loss landscapes. The Hessian is often singular or contains negative eigenvalues, violating the strict convexity assumption \citep{basu2021influence}.
+        \item \textbf{Computational Cost:} Storing and inverting the exact Hessian matrix requires \emph{$O(d^3)$} operations, which is infeasible for millions of parameters \citep{koh2017understanding, agarwal2017second}.
+        \item \textbf{Non Convexity:} Neural networks have non convex loss landscapes. The Hessian is often \emph{singular or contains negative eigenvalues}, violating the strict convexity assumption \citep{basu2021influence}.
         \item \textbf{Structural Complexity:} Standard influence functions assume independent, identically distributed data points. 
     \end{itemize}
 
@@ -297,7 +297,7 @@
     \annotate[yshift=-1em]{below}{qlinear}{\small linear term (gradient)}
     \annotate[yshift=-2.5em]{below,right}{qdamp}{\small damped Hessian}
 
-    \vspace{0.5cm}
+    \vspace{1.5cm}
     The damping $\lambda I$ ensures $(H_{\tilde{\theta}} + \lambda I) \succ 0$, making the approximation a convex bowl.
 \end{frame}
 
@@ -397,6 +397,7 @@
 \begin{frame}{GNNs: Message Passing on Graphs}
     \begin{columns}[c]
     \begin{column}{0.55\textwidth}
+    \begin{center}
     \begin{tikzpicture}[
         scale=0.85,
         node/.style={circle, draw, thick, minimum size=8mm, font=\small},
@@ -426,6 +427,7 @@
         % Label
         \node[below, font=\scriptsize\itshape, red!70!black] at (4, 0.1) {remove this edge?};
     \end{tikzpicture}
+    \end{center}
     \end{column}
     \begin{column}{0.45\textwidth}
         Each node updates its embedding by \emph{aggregating messages} from neighbors:
