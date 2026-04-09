@@ -734,6 +734,66 @@
     Large $\mathcal{T}_2$ signals that first-order influence \emph{misjudges} the group's effect.
 \end{frame}
 
+\begin{frame}{Group Influence Prediction: Setup}
+    \textbf{Task:} predict group influence on similar-data subsets (logit-space nearest neighbors).
+
+    \vspace{0.5cm}
+    \begin{center}
+    \begin{tabular}{l l l c c}
+        \hline
+        \textbf{Dataset} & \textbf{Model} & \textbf{Hessian} & $|\mathcal{S}|$ & $n_{\text{subsets}}$ \\
+        \hline
+        MNIST & LR & Exact & 400 & 50 \\
+        MNIST & MLP & EK-FAC & 400 & 50 \\
+        FashionMNIST & MLP & EK-FAC & 400 & 50 \\
+        Concrete & MLP & EK-FAC & 200 & 50 \\
+        Parkinsons & MLP & EK-FAC & 400 & 50 \\
+        CIFAR-10 & ResNet-9 & EK-FAC & 400 & 50 \\
+        \hline
+    \end{tabular}
+    \end{center}
+
+    \vspace{0.3cm}
+    \textbf{Metric:} AUDS (area under the difference of sorted influence scores) --- higher is better.
+\end{frame}
+
+\begin{frame}{Group Influence Prediction: Baselines}
+    All baselines are \textbf{additive} (no interaction term).
+
+    \vspace{0.3cm}
+    All three predict group influence as an inner product between transformed $g_f$ and $g_S$:
+    \begin{itemize}
+        \item $\mathcal{I}_1$: \quad $g_f^\top H^{-1} g_S$
+        \item \textbf{TRAK} \citep{park2023trak}: \quad $(P g_f)^\top P \, g_S$
+        \item \textbf{TracIn} \citep{pruthi2020estimating}: \quad $\sum_c \eta_c \, g_f^{(c)\top} g_S^{(c)}$ \quad --- $g^{(c)}$: gradients at training step $c$
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Group Influence Prediction: Results}
+    \begin{center}
+    \small
+    \begin{tabular}{l c c c c c}
+        \hline
+        & \textbf{TRAK} & \textbf{TracIn} & $\bm{\mathcal{I}_1}$ & $\bm{\mathcal{I}_1 + \mathcal{T}_1}$ & \textbf{Full} \\
+        \hline
+        MNIST / LR        & 0.47 & 0.43 & 0.55 & 0.60 & \textbf{0.97} \\
+        MNIST / MLP       & 0.75 & 0.78 & 0.78 & 0.81 & \textbf{0.87} \\
+        FMNIST / MLP      & 0.26 & 0.25 & 0.51 & 0.55 & \textbf{0.86} \\
+        Concrete / MLP    & 0.10 & 0.10 & 0.10 & 0.12 & \textbf{0.77} \\
+        Parkinsons / MLP  & 0.05 & 0.05 & 0.17 & 0.22 & \textbf{0.56} \\
+        CIFAR-10 / ResNet-9 & 0.25 & 0.20 & 0.28 & 0.32 & \textbf{0.51} \\
+        \hline
+    \end{tabular}
+    \end{center}
+
+    \vspace{0.3cm}
+    \begin{itemize}
+        \item $\mathcal{I}_1 + \mathcal{T}_1$ \emph{consistently} outperforms all additive baselines
+        \item Largest gains on MNIST/LR (+0.366 vs Full) and Concrete (+0.672 vs Full)
+        \item Gap to Full ($\mathcal{I}_1 + \mathcal{T}_1 + \mathcal{T}_2$) shows $\mathcal{T}_2$ still matters
+    \end{itemize}
+\end{frame}
+
 \begin{frame}{Application: Selecting Synthetic Data for LLM SFT}
     \textbf{Task:} select complementary synthetic data to add on top of real data.
 
