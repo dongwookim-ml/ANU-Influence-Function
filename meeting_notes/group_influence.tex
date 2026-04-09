@@ -828,4 +828,160 @@ Non-differentiable evaluations can be handled either by:
 (i) defining an expected-metric $f$ and using score-function estimators for $g_f,H_f$,
 or (ii) treating $f$ as black-box and estimating the first-order and second-order influence terms
 from a small number of metric evaluations along influence directions.
+
+% ============================================================
+% Deriving second-order group influence from PBRF
+% ============================================================
+
+\section{Deriving Second-Order Group Influence from the PBRF}
+\label{sec:pbrf_derivation}
+
+We show that the second-order group influence expansion in \cref{eq:second_order_if}
+can be derived directly from the Proximal Bregman Response Function (PBRF) of \citet{bae2022if},
+extended to group removal.
+This derivation is arguably more principled than the standard approach because
+(i) the Gauss-Newton Hessian arises naturally from the Bregman divergence,
+(ii) the damping term comes from the proximity regularizer, and
+(iii) both $\mathcal{T}_1$ and $\mathcal{T}_2$ emerge from a single stationarity expansion.
+
+\subsection{PBRF for group upweighting}
+
+Following~\citet{bae2022if}, the PBRF for upweighting a subset $S$ by $\varepsilon$ is defined as:
+\begin{equation}
+\theta_\varepsilon := \arg\min_{\theta}
+\frac{1}{N}\sum_{i=1}^{N} D_{\mathcal{L}^{(i)}}(f(\theta, x^{(i)}), f(\theta^s, x^{(i)}))
++ \varepsilon\,\mathcal{L}_S(\theta)
++ \frac{\lambda}{2}\|\theta - \theta^s\|^2,
+\label{eq:pbrf_group}
+\end{equation}
+where $D_{\mathcal{L}^{(i)}}(\cdot,\cdot)$ is the Bregman divergence induced by the loss $\mathcal{L}^{(i)}$
+evaluated at the network outputs, and $\theta^s$ are the (possibly non-converged) current parameters.
+
+\subsection{Linearization of the Bregman divergence}
+
+The Bregman divergence for the $i$-th data point, with $y = f(\theta, x^{(i)})$ and $y^s = f(\theta^s, x^{(i)})$, is:
+\[
+D_{\mathcal{L}^{(i)}}(y, y^s) = \mathcal{L}(y, t^{(i)}) - \mathcal{L}(y^s, t^{(i)}) - \nabla_y \mathcal{L}(y^s, t^{(i)})^\top (y - y^s).
+\]
+Taking a second-order expansion of $\mathcal{L}$ around $y^s$:
+\[
+D_{\mathcal{L}^{(i)}}(y, y^s) \approx \frac{1}{2}(y - y^s)^\top H_{y^s}^{(i)} (y - y^s),
+\]
+where $H_{y^s}^{(i)} = \nabla_y^2 \mathcal{L}(y^s, t^{(i)})$ is the Hessian of the loss with respect to the network outputs.
+
+Linearizing the network outputs $f(\theta, x^{(i)}) \approx f(\theta^s, x^{(i)}) + J_{(i)}(\theta - \theta^s)$,
+where $J_{(i)} = \nabla_\theta f(\theta^s, x^{(i)})$ is the Jacobian, we obtain:
+\[
+D_{\mathcal{L}^{(i)}}(f(\theta, x^{(i)}), f(\theta^s, x^{(i)}))
+\approx \frac{1}{2}(\theta - \theta^s)^\top J_{(i)}^\top H_{y^s}^{(i)} J_{(i)} (\theta - \theta^s).
+\]
+
+Summing over all data points, the Bregman divergence term becomes:
+\[
+\frac{1}{N}\sum_{i=1}^{N} D_{\mathcal{L}^{(i)}} \approx \frac{1}{2}(\theta - \theta^s)^\top G (\theta - \theta^s),
+\]
+where
+\begin{equation}
+G = \frac{1}{N}\sum_{i=1}^{N} J_{(i)}^\top H_{y^s}^{(i)} J_{(i)}
+\label{eq:gnh_from_bregman}
+\end{equation}
+is exactly the \textbf{Gauss-Newton Hessian} (GNH).
+Note that $G$ is positive semi-definite by construction.
+
+\subsection{Linearized PBRF objective}
+
+Substituting into \eqref{eq:pbrf_group}, the linearized PBRF objective is:
+\begin{equation}
+\min_{\theta} \;\frac{1}{2}(\theta - \theta^s)^\top \underbrace{(G + \lambda I)}_{\tilde{H}} (\theta - \theta^s)
++ \varepsilon\,\mathcal{L}_S(\theta).
+\label{eq:pbrf_linearized}
+\end{equation}
+Define $\tilde{H} := G + \lambda I$ and $\Delta := \theta_\varepsilon - \theta^s$.
+
+\subsection{Second-order expansion of $\theta_\varepsilon$ in $\varepsilon$}
+
+\paragraph{Stationarity condition.}
+Setting the gradient of \eqref{eq:pbrf_linearized} to zero:
+\[
+\tilde{H}\,\Delta + \varepsilon\,\nabla_\theta \mathcal{L}_S(\theta_\varepsilon) = 0.
+\]
+Expanding $\nabla_\theta \mathcal{L}_S(\theta^s + \Delta) \approx g_S + H_S \Delta$:
+\[
+\tilde{H}\,\Delta + \varepsilon(g_S + H_S \Delta) = 0
+\quad\Longrightarrow\quad
+(\tilde{H} + \varepsilon H_S)\Delta = -\varepsilon\, g_S.
+\]
+
+\paragraph{Neumann expansion.}
+Using $(\tilde{H} + \varepsilon H_S)^{-1} \approx \tilde{H}^{-1} - \varepsilon\,\tilde{H}^{-1} H_S \tilde{H}^{-1} + O(\varepsilon^2)$:
+\begin{equation}
+\Delta \approx -\varepsilon\,\tilde{H}^{-1} g_S + \varepsilon^2\,\tilde{H}^{-1} H_S \tilde{H}^{-1} g_S + O(\varepsilon^3).
+\label{eq:delta_pbrf}
+\end{equation}
+
+\subsection{Second-order expansion of $f(\theta_\varepsilon)$}
+
+A second-order Taylor expansion of the evaluation function around $\theta^s$:
+\[
+f(\theta_\varepsilon) = f(\theta^s) + g_f^\top \Delta + \frac{1}{2}\Delta^\top H_f \Delta.
+\]
+
+Substituting \eqref{eq:delta_pbrf} and keeping terms up to $O(\varepsilon^2)$:
+
+\paragraph{Linear term:}
+\[
+g_f^\top \Delta = -\varepsilon\, g_f^\top \tilde{H}^{-1} g_S
++ \varepsilon^2\, g_f^\top \tilde{H}^{-1} H_S \tilde{H}^{-1} g_S.
+\]
+
+\paragraph{Quadratic term:}
+\[
+\frac{1}{2}\Delta^\top H_f \Delta
+= \frac{\varepsilon^2}{2}(\tilde{H}^{-1} g_S)^\top H_f (\tilde{H}^{-1} g_S) + O(\varepsilon^3).
+\]
+
+\paragraph{Combined result:}
+\begin{equation}
+\boxed{
+f(\theta_\varepsilon) - f(\theta^s)
+\approx
+-\varepsilon\, g_f^\top \tilde{H}^{-1} g_S
++ \frac{\varepsilon^2}{2}\Big[
+\underbrace{(\tilde{H}^{-1}g_S)^\top H_f (\tilde{H}^{-1}g_S)}_{\mathcal{T}_1}
++ \underbrace{2\,(\tilde{H}^{-1}g_f)^\top H_S (\tilde{H}^{-1}g_S)}_{\mathcal{T}_2}
+\Big]
+}
+\label{eq:second_order_from_pbrf}
+\end{equation}
+where $\tilde{H} = G + \lambda I$ with $G$ as in \eqref{eq:gnh_from_bregman}.
+
+\subsection{Comparison with the standard second-order influence}
+
+Equation~\eqref{eq:second_order_from_pbrf} is identical in form to the standard second-order
+group influence expansion in \cref{eq:second_order_if}, with the replacement
+$H \to \tilde{H} = G + \lambda I$.
+Specifically, defining $\bar{v} = \tilde{H}^{-1}g_S$ and $u = \tilde{H}^{-1}g_f$:
+\begin{itemize}
+\item \textbf{First-order term:} $\mathcal{I}_1 = -\varepsilon\, g_f^\top \bar{v}$ (identical).
+\item \textbf{Interaction attribution:} $\mathcal{T}_1 = \bar{v}^\top H_f \bar{v}$ (identical).
+\item \textbf{Curvature correction:} $\mathcal{T}_2 = 2\,u^\top H_S \bar{v}$ (identical).
+\end{itemize}
+
+The key difference is that in the PBRF derivation, $\tilde{H} = G + \lambda I$
+(Gauss-Newton Hessian + damping), whereas the standard derivation uses the exact Hessian $H$.
+This is actually \emph{more principled} for three reasons:
+\begin{enumerate}
+\item The GNH arises naturally from the Bregman divergence --- no ad hoc approximation is needed.
+\item The damping $\lambda I$ comes from the proximity term in the PBRF --- it is not added post hoc to fix non-convexity.
+\item The GNH is guaranteed positive semi-definite (assuming the loss is convex in the outputs), so $\tilde{H}$ is always invertible for $\lambda > 0$.
+\end{enumerate}
+
+\paragraph{Conclusion.}
+The second-order group influence function is the second-order Taylor expansion of the
+PBRF response function in the upweighting parameter $\varepsilon$.
+This provides a unified theoretical foundation: the PBRF defines
+\emph{what question} influence functions answer (effect of data removal while preserving current predictions),
+and the second-order expansion captures \emph{group interaction effects} ($\mathcal{T}_1$ and $\mathcal{T}_2$)
+that first-order influence cannot represent.
+
 \end{document}
