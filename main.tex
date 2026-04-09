@@ -90,6 +90,16 @@
 % Result: the attack flipped predictions on 16 of 30 test images (57%).
 % Key point: influence functions reveal which training points are most vulnerable,
 % enabling both stronger attacks and better defenses.
+\begin{frame}{Application: Data Valuation}
+    \begin{center}
+        \includegraphics[height=0.55\textheight]{figures/data_valuation.pdf}
+    \end{center}
+    \vspace{-0.3cm}
+    \begin{center}
+        {\small Assigning a value to each training example based on its contribution to the model's performance.\\
+        \textit{--- \citet{jia2019towards}}}
+    \end{center}
+\end{frame}
 
 \begin{frame}{Application: Fixing Mislabeled Data}
     \begin{center}
@@ -165,22 +175,39 @@
     \end{equation}
     \annotate[yshift=-1em]{below,left}{erm}{\small original empirical risk}
     \annotate[yshift=-1em]{below,right}{upw}{\small extra weight on $z$}
+
 \end{frame}
 
-% Slide 4: The Influence Function
-\begin{frame}{Deriving the Influence Function}
-    Approximate $\hat{\theta}_{\epsilon, z}$ via first-order Taylor expansion around $\hat{\theta}$.
+% Slide 4a: Deriving the Influence Function (Part 1)
+\begin{frame}{Deriving the Influence Function (I)}
+    \textbf{Goal:} compute how $\hat{\theta}_{\epsilon, z}$ changes as we vary $\epsilon$, i.e.\ $\left.\dfrac{d\hat{\theta}_{\epsilon,z}}{d\epsilon}\right|_{\epsilon=0}$.
 
-    \vspace{0.3cm}
-    Assuming \emph{strict convexity} and \emph{twice differentiability}:
+    \vspace{0.5cm}
+    \textbf{Step 1.} Stationarity condition --- $\hat{\theta}_{\epsilon, z}$ minimizes the upweighted objective:
     \begin{equation}
-        H_{\hat{\theta}} = \frac{1}{n} \sum_{i=1}^{n} \nabla_{\theta}^2 L(z_i, \hat{\theta})
+        \frac{1}{n}\sum_{i=1}^{n} \nabla_\theta L(z_i, \hat{\theta}_{\epsilon,z}) + \epsilon\,\nabla_\theta L(z, \hat{\theta}_{\epsilon,z}) = 0
     \end{equation}
 
+    \pause
     \vspace{0.3cm}
-    The \textbf{Influence Function}:
+    \textbf{Step 2.} Taylor-expand each $\nabla_\theta L(z_i, \hat{\theta}_{\epsilon,z})$ around $\hat{\theta}$ (at $\epsilon=0$):
+    \[
+        \nabla_\theta L(z_i, \hat{\theta}_{\epsilon,z}) \approx \nabla_\theta L(z_i, \hat{\theta}) + \nabla_\theta^2 L(z_i, \hat{\theta})(\hat{\theta}_{\epsilon,z} - \hat{\theta})
+    \]
+\end{frame}
+
+% Slide 4b: Deriving the Influence Function (Part 2)
+\begin{frame}{Deriving the Influence Function (II)}
+    \textbf{Step 3.} Substitute into the stationarity condition and use $\frac{1}{n}\sum_i \nabla_\theta L(z_i, \hat{\theta}) = 0$:
+    \[
+        \underbrace{\frac{1}{n}\sum_{i=1}^{n} \nabla_\theta^2 L(z_i, \hat{\theta})}_{H_{\hat{\theta}}} (\hat{\theta}_{\epsilon,z} - \hat{\theta}) + \epsilon\,\nabla_\theta L(z, \hat{\theta}) = 0
+    \]
+
+    \pause
+    \vspace{0.3cm}
+    \textbf{Step 4.} Solve for the influence:
     \begin{equation}
-        \mathcal{I}_{\theta}(z) = \left. \frac{d\hat{\theta}_{\epsilon, z}}{d\epsilon} \right|_{\epsilon=0} = -\eqnmarkbox[blue]{invH}{H_{\hat{\theta}}^{-1}} \eqnmarkbox[red]{grad}{\nabla_{\theta} L(z, \hat{\theta})}
+        \mathcal{I}_{\theta}(z) = \left.\frac{d\hat{\theta}_{\epsilon,z}}{d\epsilon}\right|_{\epsilon=0} = -\eqnmarkbox[blue]{invH}{H_{\hat{\theta}}^{-1}} \eqnmarkbox[red]{grad}{\nabla_{\theta} L(z, \hat{\theta})}
     \end{equation}
     \annotate[yshift=-1em]{below,left}{invH}{\small curvature of the loss surface}
     \annotate[yshift=-1em]{below,right}{grad}{\small direction of steepest ascent for $z$}
@@ -215,8 +242,31 @@
         &= - \eqnmarkbox[orange]{testgrad}{\nabla_{\theta} L(z_{\text{test}}, \hat{\theta})^\top} \eqnmarkbox[blue]{invH2}{H_{\hat{\theta}}^{-1}} \eqnmarkbox[red]{traingrad}{\nabla_{\theta} L(z, \hat{\theta})}
     \end{align}
     \annotate[yshift=-0.5em]{below,left}{testgrad}{\small test gradient}
-    \annotate[yshift=-1.5em]{below}{invH2}{\small inverse Hessian}
+    \annotate[yshift=-1.8em]{below}{invH2}{\small inverse Hessian}
     \annotate[yshift=-0.5em]{below,right}{traingrad}{\small training gradient}
+\end{frame}
+
+\begin{frame}{Generalizing to Any Evaluation Function}
+    The test loss $L(z_{\text{test}}, \theta)$ is just one choice.
+    We can replace it with \emph{any differentiable evaluation function} $f(\theta)$:
+
+    \begin{equation}
+        \mathcal{I}_{f}(z) = - \nabla_{\theta} f(\hat{\theta})^\top H_{\hat{\theta}}^{-1} \nabla_{\theta} L(z, \hat{\theta})
+    \end{equation}
+
+    \pause
+    \vspace{0.3cm}
+    \textbf{Examples:}
+    \begin{itemize}
+        \item $f(\theta) = L(z_{\text{test}}, \theta)$: influence on a single test loss (previous slide)
+        \item $f(\theta) = \frac{1}{|\mathcal{D}_{\text{val}}|}\sum_{z' \in \mathcal{D}_{\text{val}}} L(z', \theta)$: influence on validation loss
+        \item $f(\theta) = L_{\text{safety}}(\mathcal{D}_{\text{safe}}, \theta)$: influence on safety alignment
+        \item $f(\theta) = \|\theta\|^2$: influence on model complexity
+    \end{itemize}
+
+    \pause
+    \vspace{0.3cm}
+    \textbf{Key:} the chain rule structure $\nabla_\theta f^\top H^{-1} \nabla_\theta L$ holds for any $f$ --- only $\nabla_\theta f$ changes.
 \end{frame}
 
 \begin{frame}{Influence vs.\ Leave-One-Out Retraining}
