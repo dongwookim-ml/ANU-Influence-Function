@@ -429,11 +429,11 @@
 
 \begin{frame}{So, do Influence Functions Work in Practice?}
     \begin{center}
-        \includegraphics[width=\linewidth]{figures/pbrf.pdf}
+        \includegraphics[width=0.8\linewidth]{figures/pbrf.pdf}
     \end{center}
     \vspace{-0.3cm}
     \begin{center}
-        {\small PBRF with GNH and damping shows strong correlation with LOO retraining effects. \citep{bae2022if}\\}
+        {\small PBRF with GNH and damping shows strong correlation with LOO retraining effects. \\ \citep{bae2022if}}
     \end{center}
 \end{frame}
 
@@ -521,7 +521,7 @@
         $h_v^{(l+1)} = \sigma\!\left(\sum_{u \in \mathcal{N}(v)} W^{(l)} h_u^{(l)}\right)$
 
         \vspace{0.5cm}
-        \textbf{Key insight:} removing edge $(v, d)$ changes:
+        \textbf{Key insight:} removing node, edge, or subgraph changes:
         \begin{itemize}
             \item What $v$ ``sees'' (message)
             \item How $\theta$ is learned (parameter)
@@ -545,8 +545,6 @@
     \vspace{0.5cm}
     We start with \textbf{edge edits in GNNs} --- the simplest structural perturbation, but one that the standard influence function framework cannot handle.
 
-    \vspace{0.3cm}
-    \hfill \citet{heo2025influence}, \textit{NeurIPS 2025}
 \end{frame}
 
 \begin{frame}{Why Edge Influence Is Hard}
@@ -586,95 +584,106 @@
     \end{columns}
 
     \pause
-    \vspace{0.5cm}
+    \vspace{0.8cm}
     \centering
     Prior work (GIF) only captures the first pathway $\Rightarrow$ poor correlation ($\sim$0.1).
 \end{frame}
 
-\begin{frame}{Existing Approach: GIF}
-    Graph Influence Function (GIF) adapts standard IF to graphs, but assumes \remph{convexity}:
+% \begin{frame}{Our Approach: Edge-Edit PBRF}
+%     We extend the \textbf{Proximal Bregman Response Function} to edge edits in GNNs:
 
-    \vspace{0.3cm}
-    \begin{itemize}
-        \item Treats edge removal as a data perturbation
-        \item Ignores the \remph{message propagation effect} of topology changes
-        \item Assumes convex loss $\Rightarrow$ invalid for GNNs
-    \end{itemize}
-
-    \pause
-    \vspace{0.5cm}
-    \textbf{Result:} Correlation between predicted and actual influence $\approx$ 0.09--0.14.
-
-    \vspace{0.5cm}
-    We need a formulation that:
-    \begin{enumerate}
-        \item Handles \emph{non-convex} GNN losses
-        \item Captures \emph{both} parameter shift and message propagation
-    \end{enumerate}
-\end{frame}
-
-\begin{frame}{Our Approach: Edge-Edit PBRF}
-    We extend the \textbf{Proximal Bregman Response Function} to edge edits in GNNs:
-
-    \vspace{0.3cm}
-    \begin{equation}
-        \theta^*_\epsilon := \arg\min_{\theta} \frac{1}{N} \sum_v \eqnmarkbox[blue]{bregman}{D_L(h^G_v, h^{G,\theta_s}_v)} + \eqnmarkbox[red]{prox}{\frac{\lambda}{2}\|\theta - \theta_s\|^2} + \epsilon \sum_v \eqnmarkbox[orange]{edgeeff}{\left(L(h^G_v) - L(h^{G_{-e}}_v)\right)}
-    \end{equation}
-    \annotate[yshift=-0.5em]{below,left}{bregman}{\small Bregman divergence}
-    \annotate[yshift=-1.5em]{below}{prox}{\small proximity to current params}
-    \annotate[yshift=-0.5em]{below,right}{edgeeff}{\small effect of edge edit}
-\end{frame}
+%     \vspace{0.3cm}
+%     \begin{equation}
+%         \theta^*_\epsilon := \arg\min_{\theta} \frac{1}{N} \sum_v \eqnmarkbox[blue]{bregman}{D_L(h^G_v, h^{G,\theta_s}_v)} + \eqnmarkbox[red]{prox}{\frac{\lambda}{2}\|\theta - \theta_s\|^2} + \epsilon \sum_v \eqnmarkbox[orange]{edgeeff}{\left(L(h^G_v) - L(h^{G_{-e}}_v)\right)}
+%     \end{equation}
+%     \annotate[yshift=-0.5em]{below,left}{bregman}{\small Bregman divergence}
+%     \annotate[yshift=-1.5em]{below}{prox}{\small proximity to current params}
+%     \annotate[yshift=-0.5em]{below,right}{edgeeff}{\small effect of edge edit}
+% \end{frame}
 
 \begin{frame}{Influence Decomposition}
-    The total influence of an edge $e$ on a prediction $f$ decomposes as:
-
-    \vspace{0.5cm}
-    \begin{equation}
-        \underbrace{\mathcal{I}(e, f)}_{\text{total influence}} = \underbrace{\mathcal{I}_{\text{param}}(e, f)}_{\text{parameter shift}} + \underbrace{\mathcal{I}_{\text{msg}}(e, f)}_{\text{message propagation}}
-    \end{equation}
-
-    \pause
-    \vspace{0.5cm}
-    \textbf{Parameter shift} (requires inverse Hessian):
-    \begin{equation}
-        \mathcal{I}_{\text{param}}(e, f) = \frac{1}{N} \nabla_\theta f^\top \, G^{-1} \sum_v \left(\nabla_\theta L(h^G_v) - \nabla_\theta L(h^{G_{-e}}_v)\right)
-    \end{equation}
-
-    \pause
-    \vspace{0.3cm}
-    \textbf{Message propagation} (direct topology effect):
-    \begin{equation}
-        \mathcal{I}_{\text{msg}}(e, f) = (2 \cdot \mathbf{1}[e \in E] - 1)\left(\frac{\partial f}{\partial A_{uv}} + \frac{\partial f}{\partial A_{vu}}\right)
-    \end{equation}
-\end{frame}
-
-\begin{frame}{Generalized Gauss-Newton Hessian}
-    For non-convex GNNs, we approximate the Hessian using:
+    The total influence of an edge $e$ on a prediction $f$ decomposes into \emph{two distinct pathways}:
 
     \vspace{1.2cm}
     \begin{equation}
-        G = \eqnmarkbox[red]{gjac1}{J_{h\theta}^\top} \eqnmarkbox[blue]{gHL}{H_h} \eqnmarkbox[red]{gjac2}{J_{h\theta}} + \eqnmarkbox[violet]{glambda}{\lambda I}
+        \eqnmarkbox[teal]{total}{\mathcal{I}(e, f)} \;=\; \eqnmarkbox[blue]{pshift}{\mathcal{I}_{\text{param}}(e, f)} \;+\; \eqnmarkbox[red]{mprop}{\mathcal{I}_{\text{msg}}(e, f)}
     \end{equation}
-    \annotate[yshift=-1em]{below,left}{gjac2}{\small Jacobian of node embeddings w.r.t.\ $\theta$}
-    \annotate[yshift=2.2em]{above}{gHL}{\small Hessian of loss w.r.t.\ embeddings}
-    \annotate[yshift=1em]{above,right}{glambda}{\small damping}
+    \annotate[yshift=1em]{above}{total}{\small total influence of edge $e$ on prediction $f$}
+    \annotate[yshift=-1em]{below,left}{pshift}{\small 1. Parameter Shift: edge changes parameters}
+    \annotate[yshift=-3em]{below,left}{mprop}{\small 2. Message Propagation: edge changes message passing}
 
-    \vspace{0.8cm}
-    \begin{itemize}
-        \item Guaranteed positive semi-definite $\Rightarrow$ no convexity needed
-        \item Inverse approximated via \textbf{LiSSA} for scalability
+\end{frame}
+
+\begin{frame}{1. Parameter Shift: Removing $e$ from Training}
+    Influence of $e$ on $f$ via parameter update (analogous to standard IF):
+    \vspace{2em}
+    \begin{equation}
+        \mathcal{I}_{\text{param}}(e, f) = \frac{1}{N}\,
+        \eqnmarkbox[orange]{testg}{\nabla_\theta f^\top}\,
+        \eqnmarkbox[blue]{invG}{G^{-1}}\,
+        \eqnmarkbox[red]{deltaG}{\sum_v \!\left(\nabla_\theta L(h^G_v) - \nabla_\theta L(h^{G_{-e}}_v)\right)}
+    \end{equation}
+    \annotate[yshift=1em]{above,left}{testg}{\small test gradient}
+    \annotate[yshift=1em]{above}{invG}{\small damped GNH inverse}
+    \annotate[yshift=-1em]{below, left}{deltaG}{\small training-gradient shift caused by removing edge $e$}
+
+    \vspace{1.5cm}
+    \pause
+    The last term replaces the single-point gradient $\nabla_\theta L(z)$: removing an edge changes \emph{every node's} gradient because message passing couples them.
+\end{frame}
+
+\begin{frame}{2.Message Propagation: Direct Topology Effect}
+    Influence of $e$ on $f$ via inference-time message passing (no retraining):
+    \vspace{2em}
+    \begin{equation}
+        \mathcal{I}_{\text{msg}}(e, f) =
+        \eqnmarkbox[violet]{sign}{(2 \cdot \mathbf{1}[e \in E] - 1)}
+        \!\left(
+        \eqnmarkbox[teal]{deriv}{\tfrac{\partial f}{\partial A_{uv}} + \tfrac{\partial f}{\partial A_{vu}}}
+        \right)
+    \end{equation}
+    \annotate[yshift=1em]{above,left}{sign}{\small $+1$ if $e$ is added, $-1$ if removed}
+    \annotate[yshift=-1em]{below,left}{deriv}{\small symmetric sensitivity of $f$ to the adjacency entries of $e$}
+
+    \vspace{1.5cm}
+    \pause
+    \begin{itemize}\setlength\itemsep{0.3em}
+        \item \emph{No Hessian inverse required} --- a single backward pass through the GNN.
+        \item Captures how $e$ reroutes messages between $u$ and $v$, holding $\theta$ fixed.
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Results: Influence Prediction Accuracy}
-    \begin{center}
-        \includegraphics[width=0.8\linewidth]{figures/edge_influence.pdf}
-    \end{center}
-    \vspace{-0.3cm}
-    \begin{center}
-        {\small Both components are essential --- consistent across GCN, GAT, ChebNet.\\
-        \citet{heo2025influence}}
-    \end{center}
+% \begin{frame}{Generalized Gauss-Newton Hessian}
+%     For non-convex GNNs, we approximate the Hessian using:
+
+%     \vspace{1.2cm}
+%     \begin{equation}
+%         G = \eqnmarkbox[red]{gjac1}{J_{h\theta}^\top} \eqnmarkbox[blue]{gHL}{H_h} \eqnmarkbox[red]{gjac2}{J_{h\theta}} + \eqnmarkbox[violet]{glambda}{\lambda I}
+%     \end{equation}
+%     \annotate[yshift=-1em]{below,left}{gjac2}{\small Jacobian of node embeddings w.r.t.\ $\theta$}
+%     \annotate[yshift=2.2em]{above}{gHL}{\small Hessian of loss w.r.t.\ embeddings}
+%     \annotate[yshift=1em]{above,right}{glambda}{\small damping}
+
+%     \vspace{0.8cm}
+%     \begin{itemize}
+%         \item Guaranteed positive semi-definite $\Rightarrow$ no convexity needed
+%         \item Inverse approximated via \textbf{LiSSA} for scalability
+%     \end{itemize}
+% \end{frame}
+
+\begin{frame}{Two Pathologies of Message Passing}
+    Stacking more GNN layers trades one failure mode for another.
+
+    \vspace{0.8em}
+    \begin{itemize}\setlength\itemsep{0.8em}
+        \item \textbf{Over-squashing} \citep{alon2020bottleneck}: information from distant nodes must be compressed through \remph{narrow bottlenecks}. Long-range dependencies get lost.
+        \pause
+        \item \textbf{Over-smoothing} \citep{li2018deeper}: as messages propagate, node representations become \remph{indistinguishable} --- every node converges to the same embedding.
+    \end{itemize}
+
+    \pause
+    \vspace{1em}
+    \textbf{The dilemma:} adding edges between communities widens bottlenecks (helps over-squashing) but also mixes their representations (worsens over-smoothing). Whether a specific edge is beneficial or harmful is \emph{not obvious from topology alone}.
 \end{frame}
 
 \begin{frame}{Edge Influence on a Barbell Graph}
@@ -689,25 +698,53 @@
     \end{center}
 \end{frame}
 
-\begin{frame}{Applications}
-    \textbf{1. Adversarial Attack Detection}
+
+\begin{frame}{Influence Prediction}
+    \begin{center}
+        \includegraphics[width=0.8\linewidth]{figures/edge_influence.pdf}
+    \end{center}
+    \vspace{-0.3cm}
+    \begin{center}
+        {\small Both components are essential 
+        \citep{heo2025influence}}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Adversarial Attack}
+    \begin{center}
+        \includegraphics[width=0.95\linewidth]{figures/attack.pdf}
+    \end{center}
+    \vspace{0.3cm}
+    \begin{center}
+        {\small Adversarial edge insertion attack: \\identify the single edge whose addition most degrades accuracy \citep{heo2025influence}}
+    \end{center}
+\end{frame}
+\begin{frame}{Potential Applications}
+    \textbf{1. Adversarial Attack \& Defense}
     \begin{itemize}
-        \item Identifies edges most harmful to model accuracy
-        \item Outperforms DICE and PRBCD baselines
+        \item Craft structural attacks by targeting the most harmful edges.
+        \item Detect and prune adversarially inserted edges.
     \end{itemize}
 
     \vspace{0.3cm}
-    \textbf{2. Graph Rewiring Analysis}
+    \textbf{2. Principled Graph Rewiring}
     \begin{itemize}
-        \item Reveals unintended side effects of existing rewiring strategies (e.g., BORF)
-        \item Quantifies trade-offs of topology modifications
+        \item Evaluate whether a proposed rewiring actually helps the downstream task.
+        \item Design rewirings that balance \emph{over-squashing} and \emph{over-smoothing}.
     \end{itemize}
 
     \vspace{0.3cm}
-    \textbf{3. Over-squashing \& Over-smoothing}
+    \textbf{3. Graph Data Curation}
     \begin{itemize}
-        \item Predicts which edges contribute to information bottlenecks
-        \item Measures impact on Dirichlet energy
+        \item Identify noisy or mislabeled edges in knowledge graphs and citation networks.
+        \item Select the most informative edges to label under an active-learning budget.
+    \end{itemize}
+
+    \vspace{0.3cm}
+    \textbf{4. Interpretability \& Fairness}
+    \begin{itemize}
+        \item Explain a GNN's prediction on a node by tracing it back to influential edges.
+        \item Audit which relationships drive potentially biased predictions.
     \end{itemize}
 \end{frame}
 
