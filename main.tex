@@ -308,32 +308,8 @@
 \end{frame}
 
 
-\begin{frame}{Do Influence Functions Work in Practice?}
-    \begin{center}
-        \includegraphics[width=\linewidth]{figures/fragile.pdf}
-    \end{center}
-\end{frame}
-
-
-% Slide 7: Challenges in Modern Deep Learning
-\begin{frame}{Challenges in Modern Architectures}
-    While elegant, applying traditional influence functions to deep neural networks presents significant hurdles:
-    
-    \vspace{0.3cm}
-    \begin{itemize}
-        \item \textbf{Computational Cost:} Storing and inverting the exact Hessian matrix requires \emph{$O(d^3)$} operations, which is infeasible for millions of parameters \citep{koh2017understanding, agarwal2017second}.
-        \pause
-        \item \textbf{Non Convexity:} Neural networks have non convex loss landscapes. The Hessian is often \emph{singular or contains negative eigenvalues}, violating the strict convexity assumption \citep{basu2021influence}.
-        \pause
-        \item \textbf{Non-Convergence:} We rarely train neural networks to a true local minimum (e.g., we use early stopping). Therefore, the assumption that the gradient \emph{$\nabla_{\theta} L(\hat{\theta}) = 0$ is violated.}
-        \pause
-        \item \textbf{Structural Complexity:} Standard influence functions assume independent, identically distributed data points. 
-    \end{itemize}
-
-\end{frame}
-
-\begin{frame}{Addressing Non-Convexity and Non-Convergence}
-    \citet{koh2017understanding}: form a \textbf{convex quadratic approximation} around $\tilde{\theta}$:
+\begin{frame}{Fix 1: Damping --- Addressing Non-Convexity and Non-Convergence}
+    \citet{koh2017understanding}: form a \textbf{convex quadratic approximation} around the current parameters $\tilde{\theta}$ (not necessarily a minimum):
 
     \begin{equation}
         \tilde{L}(z, \theta) = \eqnmarkbox[gray]{qconst}{L(z, \tilde{\theta})} + \eqnmarkbox[orange]{qlinear}{\nabla L(z, \tilde{\theta})^\top (\theta - \tilde{\theta})} + \frac{1}{2}(\theta - \tilde{\theta})^\top \eqnmarkbox[violet]{qdamp}{(H_{\tilde{\theta}} + \lambda I)} (\theta - \tilde{\theta})
@@ -342,57 +318,125 @@
     \annotate[yshift=-1em]{below}{qlinear}{\small linear term (gradient)}
     \annotate[yshift=-2.5em]{below,right}{qdamp}{\small damped Hessian}
 
-    \vspace{1.5cm}
-    The damping \remph{$\lambda I$} ensures $(H_{\tilde{\theta}} + \lambda I) \succ 0$, making the approximation a convex bowl.
+    \vspace{1.3cm}
+    \begin{itemize}\setlength\itemsep{0.4em}
+        \item \textbf{Non-convexity fix:} damping \remph{$\lambda I$} forces $(H_{\tilde{\theta}} + \lambda I) \succ 0$ --- a convex bowl.
+        \item \textbf{Non-convergence fix:} expanding around \emph{any} $\tilde{\theta}$ (not the minimum) sidesteps the assumption $\nabla R(\hat\theta) = 0$.
+    \end{itemize}
 \end{frame}
 
-\begin{frame}{Do Influence Functions Work in Practice?}
+
+\begin{frame}{Fix 2: Gauss-Newton Hessian --- Addressing Efficiency}
+    The damped Hessian is still expensive: HVPs need second-order autograd.
+
+    \vspace{0.5cm}
+    \textbf{Gauss-Newton Hessian (GNH):} a PSD approximation built from first-order quantities.
+    \vspace{1em}
+    \begin{equation}
+        G = \eqnmarkbox[red]{jac1}{J_{y\theta}^\top} \eqnmarkbox[blue]{lossH}{H_y} \eqnmarkbox[red]{jac2}{J_{y\theta}}
+    \end{equation}
+    \annotate[yshift=-1em]{below,left}{jac2}{\small Jacobian of network outputs w.r.t.\ parameters}
+    \annotate[yshift=1em]{above}{lossH}{\small Hessian of loss w.r.t.\ outputs (e.g., logits)}
+
+    \vspace{1em}
+    \emph{Why it's the practical choice:}
+    \begin{itemize}\setlength\itemsep{0.3em}
+        \item HVPs use only \remph{first-order} autograd (two backprops) --- cheaper and lower memory than second-order.
+        \item $H_y$ is tiny ($c\times c$ for $c$ outputs, often diagonal for softmax + cross-entropy).
+    \end{itemize}
+\end{frame}
+
+
+\begin{frame}{So, do Influence Functions Work in Practice?}
+    \begin{center}
+        \includegraphics[width=\linewidth]{figures/fragile.pdf}
+    \end{center}
+\end{frame}
+
+\begin{frame}{So, do Influence Functions Work in Practice?}
     \begin{center}
         \includegraphics[width=\linewidth]{figures/fragile_exp.pdf}
     \end{center}
     \vspace{-0.3cm}
     \begin{center}
-        {\small Influence estimates are accurate only for top influential points and with weight decay.\\
+        {\small It is working time to time...\\
         \citet{basu2021influence}}
     \end{center}
 \end{frame}
 
-% Slide 9: Addressing Non-Convexity
-\begin{frame}{Addressing Non-Convexity: Damping and GNH}
-    \textbf{1. Damping:} Add $\lambda I$ to force positive definiteness.
-    \begin{equation}
-        \tilde{H}_{\hat{\theta}} = \eqnmarkbox[blue]{origH}{H_{\hat{\theta}}} + \eqnmarkbox[red]{damp}{\lambda I}
-    \end{equation}
-    \annotate[yshift=-1em]{below,left}{origH}{\small may be indefinite}
-    \annotate[yshift=-1em]{below,right}{damp}{\small ensures positive definiteness}
 
-    \vspace{0.5cm}
-    \textbf{2. Gauss-Newton Hessian (GNH):} Guaranteed PSD approximation.
-    \vspace{1.5em}
-    \begin{equation}
-        G = \eqnmarkbox[red]{jac1}{J_{y\theta}^\top} \eqnmarkbox[blue]{lossH}{H_y} \eqnmarkbox[red]{jac2}{J_{y\theta}}
-    \end{equation}
-    % \annotatetwo[yshift=-3em]{below}{jac1}{m}
-    \annotate[yshift=-1em]{below,left}{jac2}{\small Jacobian of network outputs w.r.t.\ parameters}
-    \annotate[yshift=1em]{above}{lossH}{\small Hessian of loss w.r.t.\ outputs (e.g., logits)}
-\end{frame}
+% % Slide 7: Challenges in Modern Deep Learning
+% \begin{frame}{Challenges in Modern Architectures}
+%     While elegant, applying traditional influence functions to deep neural networks presents significant hurdles:
+    
+%     \vspace{0.3cm}
+%     \begin{itemize}
+%         \item \textbf{Computational Cost:} Storing and inverting the exact Hessian matrix requires \emph{$O(d^3)$} operations, which is infeasible for millions of parameters \citep{koh2017understanding, agarwal2017second}.
+%         \pause
+%         \item \textbf{Non Convexity:} Neural networks have non convex loss landscapes. The Hessian is often \emph{singular or contains negative eigenvalues}, violating the strict convexity assumption \citep{basu2021influence}.
+%         \pause
+%         \item \textbf{Non-Convergence:} We rarely train neural networks to a true local minimum (e.g., we use early stopping). Therefore, the assumption that the gradient \emph{$\nabla_{\theta} L(\hat{\theta}) = 0$ is violated.}
+%         \pause
+%         \item \textbf{Structural Complexity:} Standard influence functions assume independent, identically distributed data points. 
+%     \end{itemize}
+
+% \end{frame}
+
 
 % Slide 10: The Real Question being Answered
 \begin{frame}{What are Influence Functions Actually Computing?}
-    If influence functions in deep learning do not predict LOO retraining from scratch, what do they predict?
-    
+    Influence function is not entirely wrong!
+
     \vspace{0.5cm}
-    Recent research shows that they actually approximate the \textbf{Proximal Bregman Response Function (PBRF)} \citep{bae2022if}.
-    
-    \vspace{0.3cm}
-    Instead of asking "What happens if we retrain without $z$?", the PBRF asks:
-    \begin{quote}
-        "What is the effect of removing $z$, provided we penalize the model for changing its current parameters and for altering its current predictions on the rest of the data?"
-    \end{quote}
-    
+
+    Then, in which regime, does influence function work correctly?
+
     \vspace{0.5cm}
-    Recognizing this allows us to adapt influence functions for highly complex, non-convex, and structured architectures.
+    
+    $\Rightarrow$ We \remph{do not} retrain the model from scratch when we compute influence functions. 
+    
+    Instead, we solve a \textbf{proximal optimization problem} that penalizes deviation from the current parameters and predictions.
+    
 \end{frame}
+
+
+\begin{frame}{The PBRF: Formal Definition \citep{bae2022if}}
+    Given current parameters $\tilde{\theta}$, the PBRF response to upweighting $z$ by $\epsilon$ is:
+    \vspace{.3cm}
+    \[
+        \theta^{\text{PBRF}}_{\epsilon, z}
+        \;:=\;
+        \arg\min_{\theta}\;
+        \eqnmarkbox[blue]{breg}{\frac{1}{n}\sum_{i=1}^{n} D_{L^{(i)}}\!\bigl(f(\theta, x_i),\, f(\tilde{\theta}, x_i)\bigr)}
+        \;+\;
+        \eqnmarkbox[red]{upw}{\epsilon\,L(z, \theta)}
+        \;+\;
+        \eqnmarkbox[violet]{prox}{\tfrac{\lambda}{2}\|\theta - \tilde{\theta}\|^2}
+    \]
+    \annotate[yshift=-0.5em]{below,left}{breg}{\small \shortstack[l]{Bregman divergence \\ preserves predictions on other data}}
+    \annotate[yshift=-0.5em]{below}{upw}{\small upweight $z$}
+    \annotate[yshift=0.5em]{above,left}{prox}{\small proximity to $\tilde{\theta}$}
+
+    \vspace{1.2cm}
+    \pause
+    \textbf{Key properties:}
+    \begin{itemize}\setlength\itemsep{0.3em}
+        \item Objective is \remph{strictly convex} in $\theta$ (for $\lambda > 0$).
+        \item No assumption that $\tilde{\theta}$ is a stationary point.
+        \item Taylor-expanding gives the same influence formula (GNH+damping).
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{So, do Influence Functions Work in Practice?}
+    \begin{center}
+        \includegraphics[width=\linewidth]{figures/pbrf.pdf}
+    \end{center}
+    \vspace{-0.3cm}
+    \begin{center}
+        {\small PBRF with GNH and damping shows strong correlation with LOO retraining effects. \citep{bae2022if}\\}
+    \end{center}
+\end{frame}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Part 2: Influence Functions for Edge Edits in GNNs
