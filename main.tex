@@ -320,6 +320,7 @@
     \annotate[yshift=-1em]{below}{qlinear}{\small linear term (gradient)}
     \annotate[yshift=-2.5em]{below,right}{qdamp}{\small damped Hessian}
 
+    \pause
     \vspace{1.3cm}
     \begin{itemize}\setlength\itemsep{0.4em}
         \item \textbf{Non-convexity fix:} damping \remph{$\lambda I$} forces $(H_{\tilde{\theta}} + \lambda I) \succ 0$ --- a convex bowl.
@@ -340,7 +341,8 @@
     \annotate[yshift=-1em]{below,left}{jac2}{\small Jacobian of network outputs w.r.t.\ parameters}
     \annotate[yshift=1em]{above}{lossH}{\small Hessian of loss w.r.t.\ outputs (e.g., logits)}
 
-    \vspace{1em}
+    \pause
+    \vspace{2em}
     \emph{Why it's the practical choice:}
     \begin{itemize}\setlength\itemsep{0.3em}
         \item HVPs use only \remph{first-order} autograd (two backprops) --- cheaper and lower memory than second-order.
@@ -956,7 +958,7 @@
     \pause
     \begin{itemize}\setlength\itemsep{0.25em}
         \item \remph{Greedy selects 82\% GSM samples} --- \emph{aligned} with the GSM8K target.
-        \item $\mathcal{I}_1$ top-$K$ selects \remph{66\% MATH samples}  --- \emph{misaligned} with the target, explaining the $-1.70$\,\%p drop.
+        \item $\mathcal{I}_1$ top-$K$ selects \remph{66\% MATH samples}  --- \emph{misaligned} with the target.
     \end{itemize}
 \end{frame}
 
