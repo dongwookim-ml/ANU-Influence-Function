@@ -447,10 +447,25 @@
     \begin{center}
         \Large\textbf{``Influence beyond i.i.d.: when removing one affects many''}
 
-        % \vspace{0.5cm}
-        % \normalsize
-        % \citet{heo2025influence}\\
-        % \textit{NeurIPS 2025}
+        \vspace{0.8cm}
+        \normalsize
+        Based on \citet{heo2025influence}, \textit{NeurIPS 2025}
+    \end{center}
+
+    \vspace{0.6cm}
+    \begin{center}
+        \begin{tabular}{ccccc}
+            \includegraphics[height=2.2cm]{figures/people/jsheo.jpg} &
+            \includegraphics[height=2.2cm]{figures/people/khyun.jpg} &
+            \includegraphics[height=2.2cm]{figures/people/swyoon.jpg} &
+            \includegraphics[height=2.2cm]{figures/people/mjpark.jpeg} &
+            \includegraphics[height=2.2cm]{figures/people/jsok.jpg} \\[0.2em]
+            {\scriptsize Jaeseung Heo} &
+            {\scriptsize Kyeongheung Yun} &
+            {\scriptsize Seokwon Yoon} &
+            {\scriptsize MoonJeong Park} &
+            {\scriptsize Jungseul Ok} \\
+        \end{tabular}
     \end{center}
     \vfill
 \end{frame}
@@ -761,35 +776,122 @@
         \normalsize
         Work in progress
     \end{center}
+
+    \vspace{0.6cm}
+    \begin{center}
+        \begin{tabular}{ccccc}
+            \includegraphics[height=2.2cm]{figures/people/jsheo.jpg} &            \includegraphics[height=2.2cm]{figures/people/khyun.jpg} &
+            \includegraphics[height=2.2cm]{figures/people/ybchoi.jpg} &
+            \includegraphics[height=2.2cm]{figures/people/sehyun.jpeg} &
+            \includegraphics[height=2.2cm]{figures/people/jsok.jpg} \\[0.2em]
+            {\scriptsize Jaeseung Heo} &
+            {\scriptsize Kyeongheung Yun} &
+            {\scriptsize Youngbin Choi} &
+            {\scriptsize Sehyun Hwang} &
+            {\scriptsize Jungseul Ok} \\
+        \end{tabular}
+    \end{center}
     \vfill
 \end{frame}
 
-\begin{frame}{Limitation of First-Order Influence}
-    Let $g_f = \nabla_\theta f(\theta^*)$, $g_S = \nabla_\theta \mathcal{L}_S(\theta^*)$, $H = \nabla_\theta^2 \mathcal{L}(\theta^*)$.
+\begin{frame}{The Problem: Influence Adds Up Linearly}
+    \textit{\small $\mathcal{I}(z)$ denotes the influence of point $z$ on an evaluation function $f$; $\mathcal{I}(S) = \sum_{i \in S}\mathcal{I}(z_i, f)$.}
 
     \vspace{0.3cm}
-    First-order influence is \emph{linear} in the selected subset:
-    \begin{equation}
-        f(\theta_\varepsilon) - f(\theta^*) \approx -\varepsilon \, \eqnmarkbox[blue]{i1gf}{g_f^\top} \eqnmarkbox[red]{i1Hg}{H^{-1} g_S}
-    \end{equation}
-    \annotate[yshift=-1em]{below,left}{i1gf}{\small eval gradient}
-    \annotate[yshift=-1em]{below,right}{i1Hg}{\small preconditioned training gradient}
+    First-order influence is \emph{additive} --- the influence of a group is just the sum of individual influences~\citep{koh2019accuracy}:
+    \begin{equation*}
+        \mathcal{I}(S) \;=\; \sum_{i \in S} \mathcal{I}(z_i)
+    \end{equation*}
 
-    \vspace{1cm}
-    \textbf{Problem:} influence of a group $S = \{z_1, \dots, z_m\}$ is just the \remph{sum of individual influences}~\citep{koh2019accuracy}:
-    $$\mathcal{I}(S) = \sum_{i \in S} \mathcal{I}(z_i)$$
+    \vspace{0.4cm}
+    \textbf{So ``10 similar points'' counts as 10$\bm{\times}$ ``one point''.}
 
     \pause
-    \vspace{0.3cm}
-    Cannot capture:
-    \begin{itemize}
-        \item \textbf{Redundancy:} two similar points provide diminishing returns
-        \item \textbf{Complementarity:} two points together help more than either alone
-        \item \textbf{Interference:} two points together hurt despite each being helpful
+    \vspace{0.8cm}
+    This misses three things that actually happen:
+    \begin{itemize}\setlength\itemsep{0.4em}
+        \item \textbf{Redundancy} --- two similar points provide diminishing returns.
+        \item \textbf{Complementarity} --- two points together help more than either alone.
+        \item \textbf{Interference} --- two helpful points together can hurt.
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Second-Order Group Influence}
+
+\begin{frame}{Intuition: Data Points as Vectors}
+    Picture each training point as an \emph{arrow} in parameter space --- the direction it pulls $\theta$ during training.
+
+    \vspace{0.8cm}
+    \begin{center}
+    \begin{tikzpicture}[scale=1.1]
+        % Case 1: Redundant (aligned)
+        \begin{scope}[xshift=0cm]
+            \node at (1.5, 2.6) {\small \textbf{Redundant}};
+            \draw[->, thick, blue] (0,0) -- (2.2,1);
+            \draw[->, thick, blue] (0,0) -- (2.4,1.1);
+            \draw[->, very thick, red] (0,-0.5) -- (2.8,0.5);
+            \node at (1.5, -1.0) {\tiny\emph{sum overestimates}};
+        \end{scope}
+        % Case 2: Complementary (orthogonal)
+        \begin{scope}[xshift=5cm]
+            \node at (1.5, 2.6) {\small \textbf{Complementary}};
+            \draw[->, thick, blue] (0,0) -- (2,0);
+            \draw[->, thick, blue] (0,0) -- (0,2);
+            \draw[->, very thick, red] (0,-0.5) -- (2,1.5);
+            \node at (1.3, -1.0) {\tiny\emph{sum underestimates}};
+        \end{scope}
+        % Case 3: Interfering (opposing)
+        \begin{scope}[xshift=10cm]
+            \node at (1.5, 2.6) {\small \textbf{Interfering}};
+            \draw[->, thick, blue] (0,0) -- (2.2,1);
+            \draw[->, thick, blue] (0,0) -- (-1,1.8);
+            \draw[->, very thick, red] (0,-0.5) -- (1.2,1.3);
+            \node at (0.7, -1.0) {\tiny\emph{partial cancellation}};
+        \end{scope}
+        % Legend
+        \draw[->, thick, blue] (3, -2) -- (3.5, -2); \node[right] at (3.5, -2) {\footnotesize individual arrows};
+        \draw[->, very thick, red] (7, -2) -- (7.5, -2); \node[right] at (7.5, -2) {\footnotesize true group arrow};
+    \end{tikzpicture}
+    \end{center}
+
+    \vspace{0.4cm}
+    First-order influence uses the \emph{sum of blue arrows}. The \remph{red arrow} is what really happens.
+\end{frame}
+
+
+\begin{frame}{Intuition: Two Corrections}
+    Second-order influence corrects the first-order estimate in \remph{two} ways:
+
+    \vspace{0.6cm}
+    \begin{center}
+    \begin{tikzpicture}[scale=1.0]
+        % T1 panel
+        \begin{scope}
+            \node at (1.8, 3.0) {\small \textbf{$\mathcal{T}_1$: correcting the \emph{magnitude}}};
+            \draw[->, thick, gray, dashed] (0,0) -- (3.2,1.4);
+            \node[gray] at (3.5, 1.6) {\tiny first-order};
+            \draw[->, very thick, red] (0,0) -- (2.3,1.0);
+            \node[red] at (2.5, 0.6) {\tiny true};
+            \node[align=left] at (1.8, -0.5) {\footnotesize overlap $\Rightarrow$ shorter \\ cancellation $\Rightarrow$ longer};
+        \end{scope}
+        % T2 panel
+        \begin{scope}[xshift=7cm]
+            \node at (1.8, 3.0) {\small \textbf{$\mathcal{T}_2$: correcting the \emph{direction}}};
+            \draw[->, thick, gray, dashed] (0,0) -- (3.2,0.5);
+            \node[gray] at (3.5, 0.2) {\tiny first-order};
+            \draw[->, very thick, red] (0,0) -- (2.6,1.8);
+            \node[red] at (2.9, 1.9) {\tiny true};
+            \draw[->, thick, dashed] (3.2,0.5) arc[start angle=10, end angle=35, radius=3.3];
+            \node[align=left] at (1.8, -0.5) {\footnotesize removing $S$ reshapes \\ the loss landscape};
+        \end{scope}
+    \end{tikzpicture}
+    \end{center}
+
+    \vspace{1.0cm}
+    \pause
+    \centerline{\textbf{$\mathcal{T}_1$ asks ``\emph{how much}?''\quad $\mathcal{T}_2$ asks ``\emph{which way}?''}}
+\end{frame}
+
+\begin{frame}{Second-Order Group Influence \hfill {\small\textit{(formal)}}}
     Let $\bar{v} = H^{-1}g_S$, \ $u = H^{-1}g_f$, \ $H_f = \nabla_\theta^2 f(\theta^*)$, \ $H_S = \nabla_\theta^2 \mathcal{L}_S(\theta^*)$.
 
     \vspace{0.5cm}
@@ -811,7 +913,7 @@
     \end{itemize}
 \end{frame}
 
-\begin{frame}{$\mathcal{T}_1$: Pairwise Interaction Expansion}
+\begin{frame}{$\mathcal{T}_1$: Pairwise Interaction Expansion \hfill {\small\textit{(formal)}}}
     Let $v_i = H^{-1}\nabla_\theta \ell(z_i, \theta^*)$. Then $\mathcal{T}_1$ decomposes into pairwise terms:
 
     \begin{equation}
@@ -829,7 +931,7 @@
     \end{itemize}
 \end{frame}
 
-\begin{frame}{$\mathcal{T}_2$: Curvature Correction \citep{basu2020second}}
+\begin{frame}{$\mathcal{T}_2$: Curvature Correction \hfill {\small\textit{(formal)}} \citep{basu2020second}}
     $$\mathcal{T}_2 = 2\,u^\top H_S \,\bar{v}, \qquad u = H^{-1}g_f, \quad \bar{v} = H^{-1}g_S$$
 
     \vspace{0.5cm}
