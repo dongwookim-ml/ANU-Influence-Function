@@ -10,6 +10,8 @@
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{graphicx}
+\usepackage{array}
+\usepackage{booktabs}
 \usepackage{bm}
 \usepackage{tikz}
 \usepackage{annotate-equations}
@@ -884,9 +886,11 @@
     \vspace{0.5cm}
     \textbf{Setup:}
     \begin{itemize}
-        \item Model: Llama 3.2 3B + LoRA (rank 16)
-        \item Pool: MetaMathQA (395K samples: GSM8K + MATH augmented)
-        \item Evaluation: GSM8K test (1,319 samples)
+        \item Model: Llama-3.1-8B
+        \item Pool: MetaMathQA ($\approx$395K samples: GSM8K + MATH augmented)
+        \item Target: GSM8K
+        \item Warmup on random 5\%; select $K = 19{,}750$ samples \emph{excluding warmup}
+        \item 5 epochs SFT, 5 runs
     \end{itemize}
 \end{frame}
 
@@ -901,52 +905,61 @@
     \begin{itemize}
         \item Precompute $v_i, w_i$ for all pool data
         \item Each greedy step reduces to dot products
-        \item $\alpha = 0$: reduces to first-order top-K
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Challenge: Reference Model}
-    Influence functions require a reference $\hat{\theta}$ \emph{converged on the training data}.
+\begin{frame}{Results: 5\% Selection on MetaMath $\to$ GSM8K}
+    % Llama-3.1-8B, warmup on random 5\%, select $K = 19{,}750$ samples \emph{excluding warmup}, 5 epochs SFT, 5 runs.
 
-    \vspace{0.5cm}
-    \textbf{Problem:} base LLM is converged on \remph{pretraining data}, not SFT data.
-
-    \pause
-    \vspace{0.5cm}
-    \textbf{Solution --- Warmup Training:}
-    \begin{enumerate}
-        \item Fine-tune base model on 5\% random subset $\mathcal{T}$ from pool $\Rightarrow \hat{\theta}_{\mathcal{T}}$
-        \item Compute $H$ at $\hat{\theta}_{\mathcal{T}}$
-        \item IF predicts: ``which pool data, \textbf{added on top of} $\mathcal{T}$, would help the most?''
-        \item Greedy-select $\mathcal{S}$ ($\sim$5\%), final fine-tune on $\mathcal{S} \cup \mathcal{T}$ ($\sim$10\%)
-    \end{enumerate}
-\end{frame}
-
-\begin{frame}{Results: $\alpha$ Sweep --- Balancing $\mathcal{I}_1$ and $\mathcal{T}_1$}
+    \vspace{0.4cm}
     \begin{center}
-    \begin{tabular}{l c c}
-        \hline
-        \textbf{Method} & \textbf{GSM\%} & \textbf{Acc} \\
-        \hline
-        Greedy $\alpha=0.10$ & 64.8\% & 31.87\% \\
-        \textcolor{green!50!black}{\textbf{Greedy} $\bm{\alpha=0.25}$} & \textcolor{green!50!black}{64.2\%} & \textcolor{green!50!black}{\textbf{33.08\%}} \\
-        Greedy $\alpha=0.50$ & 56.2\% & 32.88\% \\
-        Greedy $\alpha=1.00$ & 50.8\% & 32.15\% \\
-        \hline
-        Random 10\% & 60.9\% & 31.64\% \\
-        $\mathcal{I}_1$ top-K & 65.1\% & 31.40\% \\
-        \hline
-        Full (395K) & 60.8\% & 41.02\% \\
-        \hline
+    \small
+    \begin{tabular}{lcc}
+        \toprule
+        \textbf{Method} & \textbf{GSM8K Acc (\%)} & $\bm{\Delta}$ \textbf{vs Random} \\
+        \midrule
+        Random                                     & $57.91 \pm 0.37$ & ---     \\
+        $\mathcal{I}_1$ top-$K$                    & $56.21 \pm 0.36$ & $-1.70$ \\
+        \remph{Greedy ($\mathcal{I}_1 + \mathcal{T}_1$)} & \remph{$\bm{58.79 \pm 0.42}$} & \remph{$\bm{+0.88}$} \\
+        \bottomrule
     \end{tabular}
     \end{center}
 
-    \vspace{0.3cm}
-    \begin{itemize}
-        \item Best $\alpha = 0.25$: interaction-aware selection outperforms both random and first-order only
-        \item $\alpha = 0$ reduces to $\mathcal{I}_1$ top-K (no interaction awareness)
+    \vspace{0.5cm}
+    \pause
+    \begin{itemize}\setlength\itemsep{0.3em}
+        \item Greedy with the $\mathcal{T}_1$ interaction term \emph{beats random} by $+0.88$\,\%p.
+        \item First-order top-$K$ is \remph{worse than random} ($-1.70$\,\%p) --- additive scoring misses interactions.
     \end{itemize}
 \end{frame}
+
+
+\begin{frame}{Why Does Greedy Beat $\mathcal{I}_1$ Top-$K$?}
+    % For each 5\% selection, count the fraction of \textbf{GSM-derived} vs \textbf{MATH-derived} examples in MetaMathQA (the target is GSM8K).
+
+    \vspace{0.4cm}
+    \begin{center}
+    \small
+    \begin{tabular}{lcc}
+        \toprule
+        \textbf{Selection} & \textbf{GSM (\%)} & \textbf{MATH (\%)} \\
+        \midrule
+        Full pool (reference)          & $60.76$                           & $39.24$                           \\
+        Random                         & $60.78$                           & $39.22$                           \\
+        $\mathcal{I}_1$ top-$K$        & \remph{$33.95$}                   & \remph{$66.05$}                   \\
+        \remph{Greedy}                 & \remph{$\bm{82.24}$}              & \remph{$\bm{17.76}$}              \\
+        \bottomrule
+    \end{tabular}
+    \end{center}
+
+    \vspace{0.4cm}
+    \pause
+    \begin{itemize}\setlength\itemsep{0.25em}
+        \item \remph{Greedy selects 82\% GSM samples} --- \emph{aligned} with the GSM8K target.
+        \item $\mathcal{I}_1$ top-$K$ selects \remph{66\% MATH samples}  --- \emph{misaligned} with the target, explaining the $-1.70$\,\%p drop.
+    \end{itemize}
+\end{frame}
+
 
 \begin{frame}{Summary}
     \begin{itemize}
@@ -979,7 +992,6 @@
                 \item LLM post-training: data selection, alignment, reasoning
                 \item Trustworthy ML: robustness, uncertainty, privacy
             \end{itemize}
-
         \end{column}
         \begin{column}{0.36\textwidth}
             \begin{center}
@@ -987,7 +999,7 @@
 
                 \vspace{0.5cm}
                 {\small Based in Pohang, South Korea.\\
-                Part of the \emph{CSE Department} and the \emph{Graduate School of AI}.}
+                Part of the {CSE Department} and the {Graduate School of AI}.}
             \end{center}
         \end{column}
     \end{columns}
@@ -995,26 +1007,21 @@
 
 
 \begin{frame}{Visiting ANU --- Looking for Collaborators}
-    I am on \emph{sabbatical at ANU} through early 2027
-    with two visiting PhD students at ANU: \emph{MoonJeong Park} and \emph{Saemi Moon}.
+    I am on \emph{sabbatical at ANU} through early 2027, hosted by the School of Computing.
 
-    \vspace{0.5cm}
-    \textbf{What I would love to collaborate on during the visit:}
-    \begin{itemize}\setlength\itemsep{0.3em}
-        \item \textbf{Influence functions for LLM post-training} --- scalable data attribution, second-order group influence, data selection for SFT / RLHF.
-        \item \textbf{Structured data influence} --- extending edge-edit influence beyond GNNs to tables, time series, and knowledge graphs.
-        \item \textbf{Applications} --- if your domain has a data curation, debugging, or attribution problem, I would love to hear about it.
-    \end{itemize}
+    \vspace{0.4cm}
+    \textbf{Two visiting PhD students joining me until mid-June:}
 
-    \vspace{0.5cm}
-    \textbf{I am also available for:}
-    \begin{itemize}\setlength\itemsep{0.2em}
-        \item Co-supervising ANU students interested in the topics above.
-        \item Informal reading-group or working-session collaborations.
-    \end{itemize}
+    \vspace{0.3em}
+    \begin{tabular}{@{}m{1.8cm}@{\hspace{0.6em}}m{0.78\textwidth}@{}}
+        \includegraphics[height=1.6cm]{figures/people/mjpark.jpeg} &
+        \emph{MoonJeong Park} \newline {\small GNNs: over-smoothing, generalization, gradient dynamics on graphs} \\[0.6em]
+        \includegraphics[height=1.6cm]{figures/people/smmoon.jpeg} &
+        \emph{Saemi Moon} \newline {\small machine unlearning for generative models (diffusion, GANs, VAEs); evaluation benchmarks} \\
+    \end{tabular}
 
-    \vspace{0.6cm}
-    \centerline{\large Happy to chat after the talk or over coffee --- \texttt{dongwoo.kim@postech.ac.kr}}
+    \vspace{1cm}
+    \centerline{\small Happy to chat after the talk or over coffee --- \texttt{dongwoo.kim@postech.ac.kr}}
 \end{frame}
 
 
