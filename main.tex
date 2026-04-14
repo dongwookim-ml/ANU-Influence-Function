@@ -297,19 +297,23 @@
     \end{center}
 \end{frame}
 
-% % Slide 6: Key Applications
-% \begin{frame}{Key Applications of Influence Functions}
-%     With this closed form approximation, we unlock several powerful capabilities in machine learning \citep{koh2017understanding}:
-    
-%     \vspace{0.5cm}
-%     \begin{enumerate}
-%         \item \textbf{Model Interpretability:} We can explain a model's prediction on $z_{\text{test}}$ by tracing it back to the most influential training samples.
-%         \vspace{0.2cm}
-%         \item \textbf{Identifying Mislabeled Data:} Training points with highly negative influence on the validation set are often mislabeled or harmful to generalization.
-%         \vspace{0.2cm}
-%         \item \textbf{Adversarial Robustness:} Influence functions can be used to craft stronger data poisoning attacks or, conversely, to detect and sanitize poisoned data.
-%     \end{enumerate}
-% \end{frame}
+\begin{frame}{However ... }
+    \begin{center}
+        \includegraphics[height=0.6\textheight]{figures/correlation2.pdf}
+    \end{center}
+    \vspace{-0.3cm}
+    \begin{center}
+        {\small The newly added figure with CNN does not show strong correlation.}
+    \end{center}
+\end{frame}
+
+
+\begin{frame}{Do Influence Functions Work in Practice?}
+    \begin{center}
+        \includegraphics[width=\linewidth]{figures/fragile.pdf}
+    \end{center}
+\end{frame}
+
 
 % Slide 7: Challenges in Modern Deep Learning
 \begin{frame}{Challenges in Modern Architectures}
@@ -328,37 +332,6 @@
 
 \end{frame}
 
-% % Slide 8: The Reality of Deep Learning
-% \begin{frame}{Influence Functions in Deep Learning}
-%     When we apply classical influence functions to deep neural networks, the theoretical guarantees often break down. Why?
-    
-%     \vspace{0.3cm}
-%     \begin{itemize}
-%         \item \textbf{Non-Convexity:} The loss landscape is highly non-convex. The Hessian $H_{\hat{\theta}}$ often has negative eigenvalues, meaning it is not Positive Definite and might not be invertible.
-%         \vspace{0.2cm}
-%         \item \textbf{Non-Convergence:} We rarely train neural networks to a true local minimum (e.g., we use early stopping). Therefore, the assumption that the gradient $\nabla_{\theta} L(\hat{\theta}) = 0$ is violated.
-%     \end{itemize}
-    
-%     \vspace{0.5cm}
-%     \textbf{The Result:} In deep learning, standard influence function estimates often fail to accurately predict the true parameter changes of Leave-One-Out (LOO) retraining.
-% \end{frame}
-
-% Slide 8: The Reality of Deep Learning
-% \begin{frame}{Influence Functions in Practice}
-%     When applying classical influence functions to deep neural networks, the foundational assumptions break down:
-    
-%     \vspace{0.3cm}
-%     \begin{itemize}
-%         \item \textbf{Non Convergence:} We use early stopping or stochastic gradient descent (SGD), meaning our parameters $\tilde{\theta}$ are not the true global minimum ($\tilde{\theta} \neq \hat{\theta}$). The gradient is not zero.
-%         \vspace{0.2cm}
-%         \item \textbf{Non Convexity:} Neural network loss landscapes are highly non convex. As a result, the Hessian evaluated at our current parameters, $H_{\tilde{\theta}}$, could have negative eigenvalues.
-%     \end{itemize}
-    
-%     \vspace{0.5cm}
-%     If the Hessian has negative eigenvalues, it is not positive definite, making the inverse $H_{\tilde{\theta}}^{-1}$ unstable or physically meaningless for optimization.
-% \end{frame}
-
-% Slide 9: The Quadratic Approximation Fix
 \begin{frame}{Addressing Non-Convexity and Non-Convergence}
     \citet{koh2017understanding}: form a \textbf{convex quadratic approximation} around $\tilde{\theta}$:
 
@@ -371,16 +344,6 @@
 
     \vspace{1.5cm}
     The damping \remph{$\lambda I$} ensures $(H_{\tilde{\theta}} + \lambda I) \succ 0$, making the approximation a convex bowl.
-\end{frame}
-
-\begin{frame}{Do Influence Functions Work in Practice?}
-    \begin{center}
-        \includegraphics[width=\linewidth]{figures/fragile.pdf}
-    \end{center}
-    \vspace{-0.3cm}
-    \begin{center}
-        {\small \citet{basu2021influence}}
-    \end{center}
 \end{frame}
 
 \begin{frame}{Do Influence Functions Work in Practice?}
