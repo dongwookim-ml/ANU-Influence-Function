@@ -216,28 +216,33 @@
     \[
         \eqnmarkbox[orange]{paramchange}{\hat{\theta}_{\epsilon,z} - \hat{\theta}} = -\epsilon\, \eqnmarkbox[blue]{invH}{H_{\hat{\theta}}^{-1}} \eqnmarkbox[red]{grad}{\nabla_\theta L(z, \hat{\theta})}
     \]
+    \annotate[yshift=1em]{above}{invH}{\small curvature of the loss surface}
     \annotate[yshift=-1em]{below,left}{paramchange}{\small change in parameters}
-    \annotate[yshift=-2.5em]{below}{invH}{\small curvature of the loss surface}
     \annotate[yshift=-1em]{below,right}{grad}{\small direction of steepest ascent for $z$}
+
+    \pause
+    \vspace{0.5cm}
+    \textbf{Step 4.} Formal definition of the \emph{influence function} is:
+    \[
+        \mathcal{I}_\theta(z) \;:=\; \left.\frac{d\hat{\theta}_{\epsilon,z}}{d\epsilon}\right|_{\epsilon=0} = -H_{\hat{\theta}}^{-1}\,\nabla_\theta L(z, \hat{\theta})
+    \]
 \end{frame}
 
 \begin{frame}{Approximating Leave-One-Out}
-    Removing $z$ $\Leftrightarrow$ setting $\epsilon = -\frac{1}{n}$:
+    Removing $z$ $\Leftrightarrow$ setting $\epsilon = -\frac{1}{n}$.
 
+    \vspace{0.3cm}
+    \textbf{First-order approximation} using the influence function $\mathcal{I}_\theta(z)$:
     \begin{equation}
-        \hat{\theta}_{-z} - \hat{\theta} \approx \frac{1}{n} H_{\hat{\theta}}^{-1} \nabla_{\theta} L(z, \hat{\theta})
+        \hat{\theta}_{-z} - \hat{\theta} \approx -\tfrac{1}{n}\,\mathcal{I}_\theta(z) = \frac{1}{n} H_{\hat{\theta}}^{-1} \nabla_{\theta} L(z, \hat{\theta})
     \end{equation}
 
     \pause
-    \vspace{0.5cm}
+    \vspace{0.3cm}
     Closed-form LOO approximation:
     \begin{equation}
-        \hat{\theta}_{-z} \approx \hat{\theta} + \frac{1}{n} H_{\hat{\theta}}^{-1} \nabla_{\theta} L(z, \hat{\theta})
+        \hat{\theta}_{-z} \approx \hat{\theta} - \tfrac{1}{n}\,\mathcal{I}_\theta(z) = \hat{\theta} + \frac{1}{n} H_{\hat{\theta}}^{-1} \nabla_{\theta} L(z, \hat{\theta})
     \end{equation}
-
-    \pause
-    \vspace{0.5cm}
-    \textbf{Key insight:} No retraining needed -- just one gradient, one Hessian inverse, and $\frac{1}{n}$.
 \end{frame}
 
 
@@ -245,22 +250,22 @@
 \begin{frame}{Influence on Test Predictions}
     How does removing $z$ affect the loss on a test point $z_{\text{test}}$?
 
+    \pause
+    
     \vspace{0.3cm}
     \textbf{Chain rule} \citep{koh2017understanding}: remove point $\to$ change in parameters $\to$ change in prediction.
-    \[
-        \underbrace{\frac{d\, L(z_{\text{test}}, \hat{\theta}_{\epsilon,z})}{d\epsilon}}_{\text{change in prediction}}
-        = \underbrace{\nabla_\theta L(z_{\text{test}}, \hat{\theta})^\top}_{\text{sensitivity of test loss}}
+    \vspace{0.5cm}
+    \begin{align*}
+        \mathcal{I}_L(z, z_{\text{test}}) \;\;=\;\;
+        \eqnmarkbox[purple]{prediff}{\frac{d\, L(z_{\text{test}}, \hat{\theta}_{\epsilon,z})}{d\epsilon}}
+        &= \eqnmarkbox[orange]{testgrad}{\nabla_\theta L(z_{\text{test}}, \hat{\theta})^\top}
         \cdot
-        \underbrace{\frac{d\hat{\theta}_{\epsilon,z}}{d\epsilon}}_{\text{change in parameters} = ()}
-    \]
-
-    \pause
-    \vspace{0.3cm}
-    Substituting $\mathcal{I}_\theta(z) = -H_{\hat\theta}^{-1}\nabla_\theta L(z, \hat{\theta})$:
-    \begin{equation}
-        \mathcal{I}_{L}(z, z_{\text{test}}) = - \eqnmarkbox[orange]{testgrad}{\nabla_{\theta} L(z_{\text{test}}, \hat{\theta})^\top} H_{\hat{\theta}}^{-1} \nabla_{\theta} L(z, \hat{\theta})
-    \end{equation}
-    \annotate[yshift=-0.5em]{below,left}{testgrad}{\small test gradient}
+        \eqnmarkbox[teal]{paramdiff}{\frac{d\hat{\theta}_{\epsilon,z}}{d\epsilon}} \\[2.5em]
+        &= -\, \nabla_{\theta} L(z_{\text{test}}, \hat{\theta})^\top\, H_{\hat{\theta}}^{-1}\, \nabla_{\theta} L(z, \hat{\theta})
+    \end{align*}
+    \annotate[yshift=0.8em]{above,left}{prediff}{\small change in prediction}
+    \annotate[yshift=1.3em]{above}{testgrad}{\small test gradient}
+    \annotate[yshift=-0.5em]{below,left}{paramdiff}{\small $\mathcal{I}_\theta(z)$: change in parameters}
 \end{frame}
 
 \begin{frame}{Generalizing to Any Evaluation Function}
@@ -268,22 +273,18 @@
     We can replace it with \emph{any differentiable evaluation function} $f(\theta)$:
 
     \begin{equation}
-        \mathcal{I}_{f}(z) = - \nabla_{\theta} f(\hat{\theta})^\top H_{\hat{\theta}}^{-1} \nabla_{\theta} L(z, \hat{\theta})
+        \mathcal{I}_{f}(z) = - \textcolor{red}{\nabla_{\theta} f(\hat{\theta})^\top} H_{\hat{\theta}}^{-1} \nabla_{\theta} L(z, \hat{\theta})
     \end{equation}
 
     \pause
     \vspace{0.3cm}
     \textbf{Examples:}
-    \begin{itemize}
+    \begin{itemize}\setlength\itemsep{0.6em}
         \item $f(\theta) = L(z_{\text{test}}, \theta)$: influence on a single test loss (previous slide)
         \item $f(\theta) = \frac{1}{|\mathcal{D}_{\text{val}}|}\sum_{z' \in \mathcal{D}_{\text{val}}} L(z', \theta)$: influence on validation loss
         \item $f(\theta) = L_{\text{safety}}(\mathcal{D}_{\text{safe}}, \theta)$: influence on safety alignment
         \item $f(\theta) = \|\theta\|^2$: influence on model complexity
     \end{itemize}
-
-    \pause
-    \vspace{0.3cm}
-    \textbf{Key:} the chain rule structure $\nabla_\theta f^\top H^{-1} \nabla_\theta L$ holds for any $f$ --- only $\nabla_\theta f$ changes.
 \end{frame}
 
 \begin{frame}{Influence vs.\ Leave-One-Out Retraining}
@@ -292,7 +293,7 @@
     \end{center}
     \vspace{-0.3cm}
     \begin{center}
-        {\small Correlation between influence function estimates and actual LOO retraining effects.}
+        {\small Correlation between influence function estimates and actual LOO retraining effects (Logistic Regression).}
     \end{center}
 \end{frame}
 
