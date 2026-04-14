@@ -794,104 +794,33 @@
     \vfill
 \end{frame}
 
-\begin{frame}{The Problem: Influence Adds Up Linearly}
-    \textit{\small $\mathcal{I}(z)$ denotes the influence of point $z$ on an evaluation function $f$; $\mathcal{I}(S) = \sum_{i \in S}\mathcal{I}(z_i, f)$.}
+\begin{frame}{Limitation of First-Order Influence}
+    Let $g_f = \nabla_\theta f(\theta^*)$, $g_S = \nabla_\theta \mathcal{L}_S(\theta^*)$, $H = \nabla_\theta^2 \mathcal{L}(\theta^*)$.
 
     \vspace{0.3cm}
-    First-order influence is \emph{additive} --- the influence of a group is just the sum of individual influences~\citep{koh2019accuracy}:
-    \begin{equation*}
-        \mathcal{I}(S) \;=\; \sum_{i \in S} \mathcal{I}(z_i)
-    \end{equation*}
+    First-order influence is \emph{linear} in the selected subset:
+    \begin{equation}
+        f(\theta_\varepsilon) - f(\theta^*) \approx -\varepsilon \, g_f^\top H^{-1} g_S
+    \end{equation}
 
-    \vspace{0.4cm}
-    \textbf{So ``10 similar points'' counts as 10$\bm{\times}$ ``one point''.}
+    \vspace{0.5cm}
+    \textbf{Problem:} influence of a group $S = \{z_1, \dots, z_m\}$ is just the \remph{sum of individual influences}~\citep{koh2019accuracy}:
+    \[
+        \mathcal{I}(S) = \sum_{i \in S} \mathcal{I}(z_i)
+    \]
 
     \pause
-    \vspace{0.8cm}
-    This misses three things that actually happen:
-    \begin{itemize}\setlength\itemsep{0.4em}
-        \item \textbf{Redundancy} --- two similar points provide diminishing returns.
-        \item \textbf{Complementarity} --- two points together help more than either alone.
-        \item \textbf{Interference} --- two helpful points together can hurt.
+    \vspace{0.3cm}
+    Cannot capture:
+    \begin{itemize}
+        \item \textbf{Redundancy:} two similar points provide diminishing returns
+        \item \textbf{Complementarity:} two points together help more than either alone
+        \item \textbf{Interference:} two points together hurt despite each being helpful
     \end{itemize}
 \end{frame}
 
 
-\begin{frame}{Intuition: Data Points as Vectors}
-    Picture each training point as an \emph{arrow} in parameter space --- the direction it pulls $\theta$ during training.
-
-    \vspace{0.8cm}
-    \begin{center}
-    \begin{tikzpicture}[scale=1.1]
-        % Case 1: Redundant (aligned)
-        \begin{scope}[xshift=0cm]
-            \node at (1.5, 2.6) {\small \textbf{Redundant}};
-            \draw[->, thick, blue] (0,0) -- (2.2,1);
-            \draw[->, thick, blue] (0,0) -- (2.4,1.1);
-            \draw[->, very thick, red] (0,-0.5) -- (2.8,0.5);
-            \node at (1.5, -1.0) {\tiny\emph{sum overestimates}};
-        \end{scope}
-        % Case 2: Complementary (orthogonal)
-        \begin{scope}[xshift=5cm]
-            \node at (1.5, 2.6) {\small \textbf{Complementary}};
-            \draw[->, thick, blue] (0,0) -- (2,0);
-            \draw[->, thick, blue] (0,0) -- (0,2);
-            \draw[->, very thick, red] (0,-0.5) -- (2,1.5);
-            \node at (1.3, -1.0) {\tiny\emph{sum underestimates}};
-        \end{scope}
-        % Case 3: Interfering (opposing)
-        \begin{scope}[xshift=10cm]
-            \node at (1.5, 2.6) {\small \textbf{Interfering}};
-            \draw[->, thick, blue] (0,0) -- (2.2,1);
-            \draw[->, thick, blue] (0,0) -- (-1,1.8);
-            \draw[->, very thick, red] (0,-0.5) -- (1.2,1.3);
-            \node at (0.7, -1.0) {\tiny\emph{partial cancellation}};
-        \end{scope}
-        % Legend
-        \draw[->, thick, blue] (3, -2) -- (3.5, -2); \node[right] at (3.5, -2) {\footnotesize individual arrows};
-        \draw[->, very thick, red] (7, -2) -- (7.5, -2); \node[right] at (7.5, -2) {\footnotesize true group arrow};
-    \end{tikzpicture}
-    \end{center}
-
-    \vspace{0.4cm}
-    First-order influence uses the \emph{sum of blue arrows}. The \remph{red arrow} is what really happens.
-\end{frame}
-
-
-\begin{frame}{Intuition: Two Corrections}
-    Second-order influence corrects the first-order estimate in \remph{two} ways:
-
-    \vspace{0.6cm}
-    \begin{center}
-    \begin{tikzpicture}[scale=1.0]
-        % T1 panel
-        \begin{scope}
-            \node at (1.8, 3.0) {\small \textbf{$\mathcal{T}_1$: correcting the \emph{magnitude}}};
-            \draw[->, thick, gray, dashed] (0,0) -- (3.2,1.4);
-            \node[gray] at (3.5, 1.6) {\tiny first-order};
-            \draw[->, very thick, red] (0,0) -- (2.3,1.0);
-            \node[red] at (2.5, 0.6) {\tiny true};
-            \node[align=left] at (1.8, -0.5) {\footnotesize overlap $\Rightarrow$ shorter \\ cancellation $\Rightarrow$ longer};
-        \end{scope}
-        % T2 panel
-        \begin{scope}[xshift=7cm]
-            \node at (1.8, 3.0) {\small \textbf{$\mathcal{T}_2$: correcting the \emph{direction}}};
-            \draw[->, thick, gray, dashed] (0,0) -- (3.2,0.5);
-            \node[gray] at (3.5, 0.2) {\tiny first-order};
-            \draw[->, very thick, red] (0,0) -- (2.6,1.8);
-            \node[red] at (2.9, 1.9) {\tiny true};
-            \draw[->, thick, dashed] (3.2,0.5) arc[start angle=10, end angle=35, radius=3.3];
-            \node[align=left] at (1.8, -0.5) {\footnotesize removing $S$ reshapes \\ the loss landscape};
-        \end{scope}
-    \end{tikzpicture}
-    \end{center}
-
-    \vspace{1.0cm}
-    \pause
-    \centerline{\textbf{$\mathcal{T}_1$ asks ``\emph{how much}?''\quad $\mathcal{T}_2$ asks ``\emph{which way}?''}}
-\end{frame}
-
-\begin{frame}{Second-Order Group Influence \hfill {\small\textit{(formal)}}}
+\begin{frame}{Second-Order Group Influence}
     Let $\bar{v} = H^{-1}g_S$, \ $u = H^{-1}g_f$, \ $H_f = \nabla_\theta^2 f(\theta^*)$, \ $H_S = \nabla_\theta^2 \mathcal{L}_S(\theta^*)$.
 
     \vspace{0.5cm}
@@ -913,7 +842,7 @@
     \end{itemize}
 \end{frame}
 
-\begin{frame}{$\mathcal{T}_1$: Pairwise Interaction Expansion \hfill {\small\textit{(formal)}}}
+\begin{frame}{$\mathcal{T}_1$: Pairwise Interaction Expansion}
     Let $v_i = H^{-1}\nabla_\theta \ell(z_i, \theta^*)$. Then $\mathcal{T}_1$ decomposes into pairwise terms:
 
     \begin{equation}
@@ -931,7 +860,7 @@
     \end{itemize}
 \end{frame}
 
-\begin{frame}{$\mathcal{T}_2$: Curvature Correction \hfill {\small\textit{(formal)}} \citep{basu2020second}}
+\begin{frame}{$\mathcal{T}_2$: Curvature Correction \citep{basu2020second}}
     $$\mathcal{T}_2 = 2\,u^\top H_S \,\bar{v}, \qquad u = H^{-1}g_f, \quad \bar{v} = H^{-1}g_S$$
 
     \vspace{0.5cm}
@@ -948,65 +877,6 @@
     Large $\mathcal{T}_2$ signals that first-order influence \emph{misjudges} the group's effect.
 \end{frame}
 
-\begin{frame}{Group Influence Prediction: Setup}
-    \textbf{Task:} predict group influence on similar-data subsets (logit-space nearest neighbors).
-
-    \vspace{0.5cm}
-    \begin{center}
-    \begin{tabular}{l l l c c}
-        \hline
-        \textbf{Dataset} & \textbf{Model} & \textbf{Hessian} & $|\mathcal{S}|$ & $n_{\text{subsets}}$ \\
-        \hline
-        MNIST & LR & Exact & 400 & 50 \\
-        MNIST & MLP & EK-FAC & 400 & 50 \\
-        FashionMNIST & MLP & EK-FAC & 400 & 50 \\
-        Concrete & MLP & EK-FAC & 200 & 50 \\
-        Parkinsons & MLP & EK-FAC & 400 & 50 \\
-        CIFAR-10 & ResNet-9 & EK-FAC & 400 & 50 \\
-        \hline
-    \end{tabular}
-    \end{center}
-
-    \vspace{0.3cm}
-    \textbf{Metric:} AUDS (area under the difference of sorted influence scores) --- higher is better.
-\end{frame}
-
-\begin{frame}{Group Influence Prediction: Baselines}
-    All baselines are \textbf{additive} (no interaction term).
-
-    \vspace{0.3cm}
-    All three predict group influence as an inner product between transformed $g_f$ and $g_S$:
-    \begin{itemize}
-        \item $\mathcal{I}_1$: \quad $g_f^\top H^{-1} g_S$
-        \item \textbf{TRAK} \citep{park2023trak}: \quad $(P g_f)^\top P \, g_S$
-        \item \textbf{TracIn} \citep{pruthi2020estimating}: \quad $\sum_c \eta_c \, g_f^{(c)\top} g_S^{(c)}$ \quad --- $g^{(c)}$: gradients at training step $c$
-    \end{itemize}
-\end{frame}
-
-\begin{frame}{Group Influence Prediction: Results}
-    \begin{center}
-    \small
-    \begin{tabular}{l c c c c c}
-        \hline
-        & \textbf{TRAK} & \textbf{TracIn} & $\bm{\mathcal{I}_1}$ & $\bm{\mathcal{I}_1 + \mathcal{T}_1}$ & \textbf{Full} \\
-        \hline
-        MNIST / LR        & 0.47 & 0.43 & 0.55 & 0.60 & \textbf{0.97} \\
-        MNIST / MLP       & 0.75 & 0.78 & 0.78 & 0.81 & \textbf{0.87} \\
-        FMNIST / MLP      & 0.26 & 0.25 & 0.51 & 0.55 & \textbf{0.86} \\
-        Concrete / MLP    & 0.10 & 0.10 & 0.10 & 0.12 & \textbf{0.77} \\
-        Parkinsons / MLP  & 0.05 & 0.05 & 0.17 & 0.22 & \textbf{0.56} \\
-        CIFAR-10 / ResNet-9 & 0.25 & 0.20 & 0.28 & 0.32 & \textbf{0.51} \\
-        \hline
-    \end{tabular}
-    \end{center}
-
-    \vspace{0.3cm}
-    \begin{itemize}
-        \item $\mathcal{I}_1 + \mathcal{T}_1$ \emph{consistently} outperforms all additive baselines
-        \item Largest gains on MNIST/LR (+0.366 vs Full) and Concrete (+0.672 vs Full)
-        \item Gap to Full ($\mathcal{I}_1 + \mathcal{T}_1 + \mathcal{T}_2$) shows $\mathcal{T}_2$ still matters
-    \end{itemize}
-\end{frame}
 
 \begin{frame}{Application: Selecting Synthetic Data for LLM SFT}
     \textbf{Task:} select complementary synthetic data to add on top of real data.
@@ -1024,7 +894,7 @@
     Let $w_i = H_f v_i$. Predicted gain when adding point $j$ to current set $\mathcal{S}$:
 
     \begin{equation}
-        \Delta f(j) = \underbrace{-\frac{1}{N} g_f^\top v_j}_{\text{first-order}} + \underbrace{\frac{\alpha}{2N^2}\left(2\sum_{i \in \mathcal{S}} w_j^\top v_i + w_j^\top v_j\right)}_{\text{interaction}}
+        \Delta f(j) = \underbrace{-\frac{1}{N} g_f^\top v_j}_{\text{first-order}} + \underbrace{\frac{1}{2N^2}\left(2\sum_{i \in \mathcal{S}} w_j^\top v_i + w_j^\top v_j\right)}_{\text{interaction}}
     \end{equation}
 
     \vspace{0.5cm}
@@ -1078,53 +948,75 @@
     \end{itemize}
 \end{frame}
 
-\begin{frame}{$\mathcal{T}_1$ as a Diversity Mechanism}
-    Higher $\alpha$ (more $\mathcal{T}_1$ weight) $\Rightarrow$ more diverse data source composition:
-
-    \vspace{0.5cm}
-    \begin{center}
-    \begin{tabular}{l c c}
-        \hline
-        & \textbf{GSM data} & \textbf{MATH data} \\
-        \hline
-        $\mathcal{I}_1$ top-K ($\alpha=0$) & 65\% & 35\% \\
-        Greedy $\alpha=0.25$ & 64\% & 36\% \\
-        Greedy $\alpha=0.50$ & 56\% & 44\% \\
-        Greedy $\alpha=1.00$ & 51\% & 49\% \\
-        \hline
-    \end{tabular}
-    \end{center}
-
-    \vspace{0.5cm}
-    \begin{itemize}
-        \item Without $\mathcal{T}_1$: $\mathcal{I}_1$ concentrates on GSM-type data
-        \item With $\mathcal{T}_1$: selects a mix of GSM and MATH data
-        \item $\mathcal{T}_1$ selects MATH data that \emph{transfers} to GSM reasoning --- cross-domain complementarity
-    \end{itemize}
-\end{frame}
-
 \begin{frame}{Summary}
     \begin{itemize}
         \item \textbf{Part 1:} Influence functions approximate LOO retraining
-            \begin{itemize}
-                \item In deep learning $\to$ PBRF with damping and GNH
-            \end{itemize}
         \vspace{0.2cm}
         \item \textbf{Part 2:} Edge influence in GNNs decomposes into parameter shift + message propagation
-            \begin{itemize}
-                \item Both essential; 0.95 correlation vs.\ 0.1 for prior work
-            \end{itemize}
         \vspace{0.2cm}
         \item \textbf{Part 3:} Second-order group influence captures data interactions
-            \begin{itemize}
-                \item Pairwise interaction term $v_i^\top H_f v_j$ quantifies complementarity/redundancy
-                \item Selects diverse, complementary synthetic data for LLM SFT
-            \end{itemize}
     \end{itemize}
 
     \vspace{0.5cm}
     Move beyond i.i.d.\ first-order influence to capture \emph{structure} and \emph{interactions} in training data.
 \end{frame}
+
+\begin{frame}{Machine Learning Lab @ POSTECH}
+    \small
+    \begin{columns}[T]
+        \begin{column}{0.62\textwidth}
+            \textbf{\href{https://ml.postech.ac.kr}{ml.postech.ac.kr}}
+
+            \vspace{0.4cm}
+            A research group at POSTECH working on the theory and practice of learning from structured and limited data.
+
+            \vspace{0.4cm}
+            \textbf{Research directions:}
+            \begin{itemize}\setlength\itemsep{0.25em}
+                \item Influence functions, data attribution, and data-centric ML
+                \item Graph neural networks and structured prediction
+                \item Generative models and probabilistic inference
+                \item LLM post-training: data selection, alignment, reasoning
+                \item Trustworthy ML: robustness, uncertainty, privacy
+            \end{itemize}
+
+        \end{column}
+        \begin{column}{0.36\textwidth}
+            \begin{center}
+                \includegraphics[height=3.2cm]{figures/POSTECH_emblem.pdf}
+
+                \vspace{0.5cm}
+                {\small Based in Pohang, South Korea.\\
+                Part of the \emph{CSE Department} and the \emph{Graduate School of AI}.}
+            \end{center}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+
+\begin{frame}{Visiting ANU --- Looking for Collaborators}
+    I am on \emph{sabbatical at ANU} through early 2027
+    with two visiting PhD students at ANU: \emph{MoonJeong Park} and \emph{Saemi Moon}.
+
+    \vspace{0.5cm}
+    \textbf{What I would love to collaborate on during the visit:}
+    \begin{itemize}\setlength\itemsep{0.3em}
+        \item \textbf{Influence functions for LLM post-training} --- scalable data attribution, second-order group influence, data selection for SFT / RLHF.
+        \item \textbf{Structured data influence} --- extending edge-edit influence beyond GNNs to tables, time series, and knowledge graphs.
+        \item \textbf{Applications} --- if your domain has a data curation, debugging, or attribution problem, I would love to hear about it.
+    \end{itemize}
+
+    \vspace{0.5cm}
+    \textbf{I am also available for:}
+    \begin{itemize}\setlength\itemsep{0.2em}
+        \item Co-supervising ANU students interested in the topics above.
+        \item Informal reading-group or working-session collaborations.
+    \end{itemize}
+
+    \vspace{0.6cm}
+    \centerline{\large Happy to chat after the talk or over coffee --- \texttt{dongwoo.kim@postech.ac.kr}}
+\end{frame}
+
 
 \begin{frame}[allowframebreaks]{References}
     \printbibliography[heading=none]
