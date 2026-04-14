@@ -151,7 +151,7 @@
     
     \pause
     \vspace{0.5cm}
-    \textbf{The Naive Approach (Leave-One-Out (LOO) Retraining):}
+    \textbf{The Naive Approach (\emph{Leave-One-Out} (LOO) Retraining):}
     \begin{itemize}
         \item Remove the target data point $z$ from the training set.
         \item Retrain the model entirely from scratch.
@@ -160,7 +160,8 @@
     
     \pause
     \vspace{0.5cm}
-    \textbf{The Problem:} Retraining a modern neural network for every single training point is \emph{computationally impossible}. We need an efficient approximation.
+    \textbf{The Problem:} %Retraining a modern neural network for every single training point is 
+    LOO is \emph{computationally impossible}. We need an efficient approximation.
 \end{frame}
 
 % Slide 3: Empirical Risk Minimization
@@ -168,17 +169,19 @@
     Let $z = (x, y)$ be a training point, $L(z, \theta)$ the loss, and $\hat{\theta}$ the ERM solution:
 
     \begin{equation}
-        \hat{\theta} = \arg\min_{\theta} \frac{1}{n} \sum_{i=1}^{n} L(z_i, \theta)
+        \hat{\theta} = \arg\min_{\theta} \frac{1}{n} \sum_{i=1}^{n} L(z_i, \theta) = \arg\min_{\theta} R(\theta)
     \end{equation}
+
+    \pause
 
     \vspace{0.5cm}
     Upweight a single training point $z$ by $\epsilon$:
 
     \begin{equation}
-        \hat{\theta}_{\epsilon, z} = \arg\min_{\theta} \eqnmarkbox[blue]{erm}{\frac{1}{n} \sum_{i=1}^{n} L(z_i, \theta)} + \eqnmarkbox[red]{upw}{\epsilon \, L(z, \theta)}
+        \hat{\theta}_{\epsilon, z} = \arg\min_{\theta} \eqnmarkbox[blue]{erm}{R(\theta)} + \eqnmarkbox[red]{upw}{\epsilon \, L(z, \theta)}
     \end{equation}
-    \annotate[yshift=-1em]{below,left}{erm}{\small original empirical risk}
-    \annotate[yshift=-1em]{below,right}{upw}{\small extra weight on $z$}
+    \annotate[yshift=-1em]{below,left}{erm}{\small empirical risk}
+    \annotate[yshift=-1em]{below,right}{upw}{\small extra weight $\epsilon$ on $z$}
 
 \end{frame}
 
@@ -189,31 +192,32 @@
     \vspace{0.5cm}
     \textbf{Step 1.} Stationarity condition --- $\hat{\theta}_{\epsilon, z}$ minimizes the upweighted objective:
     \begin{equation}
-        \frac{1}{n}\sum_{i=1}^{n} \nabla_\theta L(z_i, \hat{\theta}_{\epsilon,z}) + \epsilon\,\nabla_\theta L(z, \hat{\theta}_{\epsilon,z}) = 0
+        \nabla_\theta R(\hat{\theta}_{\epsilon,z}) + \epsilon\,\nabla_\theta L(z, \hat{\theta}_{\epsilon,z}) = 0
     \end{equation}
 
     \pause
     \vspace{0.3cm}
-    \textbf{Step 2.} Taylor-expand each $\nabla_\theta L(z_i, \hat{\theta}_{\epsilon,z})$ around $\hat{\theta}$ (at $\epsilon=0$):
+    \textbf{Step 2.} Taylor expansion of $\nabla_\theta R(\hat{\theta}_{\epsilon,z})$ around $\hat{\theta}$ (at $\epsilon=0$):
     \[
-        \nabla_\theta L(z_i, \hat{\theta}_{\epsilon,z}) \approx \nabla_\theta L(z_i, \hat{\theta}) + \nabla_\theta^2 L(z_i, \hat{\theta})(\hat{\theta}_{\epsilon,z} - \hat{\theta})
+        \nabla_\theta R(\hat{\theta}_{\epsilon,z}) \approx \underbrace{\nabla_\theta R(\hat{\theta})}_{=\,0} + \nabla_\theta^2 R(\hat{\theta})(\hat{\theta}_{\epsilon,z} - \hat{\theta})
     \]
 \end{frame}
 
 % Slide 4b: Deriving the Influence Function (Part 2)
 \begin{frame}{Deriving the Influence Function (II)}
-    \textbf{Step 3.} Substitute into the stationarity condition and use $\frac{1}{n}\sum_i \nabla_\theta L(z_i, \hat{\theta}) = 0$:
+    \textbf{Step 3.} Substitute into the stationarity condition:
     \[
-        \underbrace{\frac{1}{n}\sum_{i=1}^{n} \nabla_\theta^2 L(z_i, \hat{\theta})}_{H_{\hat{\theta}}} (\hat{\theta}_{\epsilon,z} - \hat{\theta}) + \epsilon\,\nabla_\theta L(z, \hat{\theta}) = 0
+        \underbrace{\nabla_\theta^2 R(\hat{\theta})}_{H_{\hat{\theta}}} (\hat{\theta}_{\epsilon,z} - \hat{\theta}) + \epsilon\,\nabla_\theta L(z, \hat{\theta}) = 0
     \]
 
     \pause
-    \vspace{0.3cm}
-    \textbf{Step 4.} Solve for the influence:
-    \begin{equation}
-        \mathcal{I}_{\theta}(z) = \left.\frac{d\hat{\theta}_{\epsilon,z}}{d\epsilon}\right|_{\epsilon=0} = -\eqnmarkbox[blue]{invH}{H_{\hat{\theta}}^{-1}} \eqnmarkbox[red]{grad}{\nabla_{\theta} L(z, \hat{\theta})}
-    \end{equation}
-    \annotate[yshift=-1em]{below,left}{invH}{\small curvature of the loss surface}
+    
+    Rearranging:
+    \[
+        \eqnmarkbox[orange]{paramchange}{\hat{\theta}_{\epsilon,z} - \hat{\theta}} = -\epsilon\, \eqnmarkbox[blue]{invH}{H_{\hat{\theta}}^{-1}} \eqnmarkbox[red]{grad}{\nabla_\theta L(z, \hat{\theta})}
+    \]
+    \annotate[yshift=-1em]{below,left}{paramchange}{\small change in parameters}
+    \annotate[yshift=-2.5em]{below}{invH}{\small curvature of the loss surface}
     \annotate[yshift=-1em]{below,right}{grad}{\small direction of steepest ascent for $z$}
 \end{frame}
 
@@ -221,7 +225,7 @@
     Removing $z$ $\Leftrightarrow$ setting $\epsilon = -\frac{1}{n}$:
 
     \begin{equation}
-        \hat{\theta}_{-z} - \hat{\theta} \approx -\frac{1}{n} \mathcal{I}_{\theta}(z) = \frac{1}{n} H_{\hat{\theta}}^{-1} \nabla_{\theta} L(z, \hat{\theta})
+        \hat{\theta}_{-z} - \hat{\theta} \approx \frac{1}{n} H_{\hat{\theta}}^{-1} \nabla_{\theta} L(z, \hat{\theta})
     \end{equation}
 
     \pause
@@ -239,15 +243,24 @@
 
 % Slide 5: Influence on Test Loss
 \begin{frame}{Influence on Test Predictions}
-    How does removing $z$ affect the loss on a test point $z_{\text{test}}$? Apply the chain rule \citep{koh2017understanding}:
+    How does removing $z$ affect the loss on a test point $z_{\text{test}}$?
 
-    \begin{align}
-        \mathcal{I}_{L}(z, z_{\text{test}}) &= \left. \frac{d}{d\epsilon} L(z_{\text{test}}, \hat{\theta}_{\epsilon, z}) \right|_{\epsilon=0} \nonumber \\
-        &= - \eqnmarkbox[orange]{testgrad}{\nabla_{\theta} L(z_{\text{test}}, \hat{\theta})^\top} \eqnmarkbox[blue]{invH2}{H_{\hat{\theta}}^{-1}} \eqnmarkbox[red]{traingrad}{\nabla_{\theta} L(z, \hat{\theta})}
-    \end{align}
+    \vspace{0.3cm}
+    \textbf{Chain rule} \citep{koh2017understanding}: remove point $\to$ change in parameters $\to$ change in prediction.
+    \[
+        \underbrace{\frac{d\, L(z_{\text{test}}, \hat{\theta}_{\epsilon,z})}{d\epsilon}}_{\text{change in prediction}}
+        = \underbrace{\nabla_\theta L(z_{\text{test}}, \hat{\theta})^\top}_{\text{sensitivity of test loss}}
+        \cdot
+        \underbrace{\frac{d\hat{\theta}_{\epsilon,z}}{d\epsilon}}_{\text{change in parameters} = ()}
+    \]
+
+    \pause
+    \vspace{0.3cm}
+    Substituting $\mathcal{I}_\theta(z) = -H_{\hat\theta}^{-1}\nabla_\theta L(z, \hat{\theta})$:
+    \begin{equation}
+        \mathcal{I}_{L}(z, z_{\text{test}}) = - \eqnmarkbox[orange]{testgrad}{\nabla_{\theta} L(z_{\text{test}}, \hat{\theta})^\top} H_{\hat{\theta}}^{-1} \nabla_{\theta} L(z, \hat{\theta})
+    \end{equation}
     \annotate[yshift=-0.5em]{below,left}{testgrad}{\small test gradient}
-    \annotate[yshift=-1.8em]{below}{invH2}{\small inverse Hessian}
-    \annotate[yshift=-0.5em]{below,right}{traingrad}{\small training gradient}
 \end{frame}
 
 \begin{frame}{Generalizing to Any Evaluation Function}
