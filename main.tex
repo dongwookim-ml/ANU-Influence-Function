@@ -50,6 +50,11 @@
         \bigskip
         
         \Large\textbf{``Can we quantify the \remph{influence} of a single data point\thinspace?''}
+
+        \pause
+        \bigskip
+
+        \large\textit{But influence on \emph{what}\thinspace?}
     \end{center}
     \vfill
 \end{frame}
@@ -61,7 +66,7 @@
     \end{center}
     \vspace{-0.3cm}
     \begin{center}
-        {\small Which training examples were most helpful or harmful for a prediction?\\
+        {\small Which training examples were most helpful or harmful for \emph{a prediction}?\\
         \textit{--- \citet{koh2017understanding}}}
     \end{center}
 \end{frame}
@@ -79,7 +84,7 @@
     \vspace{-0.3cm}
     \begin{center}
         {\small A small, visually-indistinguishable perturbation to a single training image\\
-        can flip the model's prediction on multiple test images.\\
+        can flip the model's prediction on \emph{multiple test images}.\\
         \textit{--- \citet{koh2017understanding}}}
     \end{center}
 \end{frame}
@@ -96,7 +101,7 @@
     \end{center}
     \vspace{-0.3cm}
     \begin{center}
-        {\small Assigning a value to each training example based on its contribution to the model's performance.\\
+        {\small Assigning a value to each training example based on its \emph{contribution} to the model's performance.\\
         \textit{--- \citet{jia2019towards}}}
     \end{center}
 \end{frame}
@@ -109,7 +114,7 @@
     \begin{center}
         {\small Using influence to prioritize which labels to check outperforms\\
         random inspection and loss-based selection.\\
-        \textit{--- \citet{koh2017understanding}}}
+        \textit{--- \citet{koh2017understanding} } }
     \end{center}
 \end{frame}
 % Notes: Figure 6 from Koh & Liang (2017). Fixing mislabeled examples on the Enron spam dataset.
@@ -126,7 +131,7 @@
     \vspace{-0.3cm}
     \begin{center}
         {\small Tracing an LLM's response back to its most influential training sequences.\\
-        \textit{--- \citet{grosse2023studying}}}
+        \textit{--- \citet{grosse2023studying} (Anthropic)}}
     \end{center}
 \end{frame}
 % Notes: Figure from Grosse et al. (2023), Anthropic. Query: "shutdown" — the model is asked
@@ -141,7 +146,6 @@
 \begin{frame}{From Intuition to Formalization}
     \textbf{Core Question:} How does \remph{a single training data point} affect our model's predictions?
     
-    \pause
     \vspace{0.5cm}
     Imagine a scenario where we want to understand a model's behavior, find mislabeled data, or defend against data poisoning attacks.
     
