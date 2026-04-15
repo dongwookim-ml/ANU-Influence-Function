@@ -21,6 +21,7 @@
 \setbeamertemplate{navigation symbols}{}
 \setbeamertemplate{footline}[frame number]
 \setbeamertemplate{frametitle}[default][left]
+% \setbeamercovered{transparent=25}
 \renewcommand{\emph}[1]{\textit{\textcolor{blue}{#1}}}
 \newcommand{\remph}[1]{\textit{\textcolor{red}{#1}}}
 
@@ -56,7 +57,7 @@
         \pause
         \bigskip
 
-        \large\textit{But influence on \emph{what}\thinspace?}
+        \large\textit{What can we do with that?}
     \end{center}
     \vfill
 \end{frame}
@@ -946,7 +947,7 @@ x
     \pause
     \begin{itemize}\setlength\itemsep{0.3em}
         \item Greedy with the $\mathcal{T}_1$ interaction term \emph{beats random} by $+0.88$\,\%p.
-        \item First-order top-$K$ is \remph{worse than random} ($-1.70$\,\%p) --- additive scoring misses interactions.
+        \item First-order top-$K$ is \remph{worse than random} --- due to redundancy in the top-ranked samples.
     \end{itemize}
 \end{frame}
 
