@@ -819,7 +819,7 @@ x
     \begin{equation}
         f(\theta_\varepsilon) - f(\theta^*) \approx -\varepsilon \, g_f^\top H^{-1} g_S,
     \end{equation}
-    where $g_S = \sum_{i \in S} \nabla_\theta \ell(z_i, \theta^*)$, $H = \nabla_\theta^2 \mathcal{L}(\theta^*)$
+    where $g_S = \sum_{i \in S} \nabla_\theta L(z_i, \theta^*)$, $H = \nabla_\theta^2 R(\theta^*)$.
 
     \pause
     \vspace{0.5cm}
@@ -862,7 +862,7 @@ x
 \end{frame}
 
 \begin{frame}{$\mathcal{T}_1$: Pairwise Interaction Expansion}
-    Let $v_i = H^{-1}\nabla_\theta \ell(z_i, \theta^*)$. Then $\mathcal{T}_1$ decomposes into pairwise terms:
+    Let $v_i = H^{-1}\nabla_\theta L(z_i, \theta^*)$. Then $\mathcal{T}_1$ decomposes into pairwise terms:
 
     \begin{equation}
         \mathcal{T}_1 = \frac{1}{|S|^2}\sum_{i,j \in S} v_i^\top H_f \, v_j
@@ -871,6 +871,7 @@ x
     \vspace{0.5cm}
     Each $v_i^\top H_f v_j$ measures how data points $i$ and $j$ \emph{interact} under the evaluation curvature.
 
+    \pause
     \vspace{0.5cm}
     This enables:
     \begin{itemize}
@@ -882,18 +883,8 @@ x
 \begin{frame}{$\mathcal{T}_2$: Curvature Correction \citep{basu2020second}}
     $$\mathcal{T}_2 = 2\,u^\top H_S \,\bar{v}, \qquad u = H^{-1}g_f, \quad \bar{v} = H^{-1}g_S$$
 
-    \vspace{0.5cm}
-    $H_S$ rotates the update direction $\bar{v}$. The correction $u^\top (H_S \bar{v})$ asks: does this rotation \emph{help} or \emph{hurt} evaluation?
-
-    \vspace{0.5cm}
-    \begin{itemize}
-        \item $\mathcal{T}_2 > 0$: the group's curvature deflects the update \remph{toward} the evaluation objective $\Rightarrow$ \emph{harmful} (increases loss)
-        \item $\mathcal{T}_2 < 0$: deflection is \emph{away} from evaluation loss $\Rightarrow$ \emph{beneficial}
-        \item $\mathcal{T}_2 \approx 0$: group curvature is orthogonal to evaluation --- no correction needed
-    \end{itemize}
-
-    \vspace{0.5cm}
-    Large $\mathcal{T}_2$ signals that first-order influence \emph{misjudges} the group's effect.
+    \vspace{0.6cm}
+    $\mathcal{T}_2$ measures the \emph{alignment} between the evaluation gradient $g_f$ and the group training gradient $g_S$, weighted by the group's curvature $H_S$ (preconditioned by $H^{-1}$).
 \end{frame}
 
 
@@ -922,6 +913,7 @@ x
     \begin{itemize}
         \item Precompute $v_i, w_i$ for all pool data
         \item Each greedy step reduces to dot products
+        \item Curvature correction term can also be added
     \end{itemize}
 \end{frame}
 
@@ -1049,5 +1041,6 @@ x
 \begin{frame}[allowframebreaks]{References}
     \printbibliography[heading=none]
 \end{frame}
+
 
 \end{document}
