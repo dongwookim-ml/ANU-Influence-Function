@@ -306,6 +306,8 @@
     \begin{itemize}\setlength\itemsep{2em}
         \item \textbf{Non-convexity.} The loss landscape is non-convex --- the Hessian $H_{\hat\theta}$ is often \remph{not positive semi-definite} \citep{basu2021influence}.
 
+        \pause
+
         \item \textbf{Non-convergence.} Networks are rarely trained to a true minimum (early stopping, finite epochs, optimizer noise) --- so $\nabla_\theta R(\hat\theta) \neq 0$, \remph{breaking the stationarity} condition in the derivation.
     \end{itemize}
 \end{frame}
@@ -319,7 +321,7 @@ x
     \end{equation}
     \annotate[yshift=-1em]{below,left}{qconst}{\small constant}
     \annotate[yshift=-1em]{below}{qlinear}{\small linear term (gradient)}
-    \annotate[yshift=-2.5em]{below,right}{qdamp}{\small damped Hessian}
+    \annotate[yshift=-1em]{below,right}{qdamp}{\small damped Hessian}
 
     \pause
     \vspace{1.3cm}
@@ -407,12 +409,14 @@ x
     
     $\Rightarrow$ We \remph{do not} retrain the model from scratch when we compute influence functions. 
     
-    Instead, we solve a \textbf{proximal optimization problem} that penalizes deviation from the current parameters and predictions.
+    \vspace{0.5cm}
+
+    Instead, we retrain a model from the current parameters $\tilde{\theta}$ without the target data point $z$.
     
 \end{frame}
 
 
-\begin{frame}{The PBRF: Formal Definition \citep{bae2022if}}
+\begin{frame}{PBRF: Proximal Bregman Response Function \citep{bae2022if}}
     Given current parameters $\tilde{\theta}$, the PBRF response to upweighting $z$ by $\epsilon$ is:
     \vspace{.3cm}
     \[
@@ -425,8 +429,11 @@ x
         \;+\;
         \eqnmarkbox[violet]{prox}{\tfrac{\lambda}{2}\|\theta - \tilde{\theta}\|^2}
     \]
+    \pause
     \annotate[yshift=-0.5em]{below,left}{breg}{\small \shortstack[l]{Bregman divergence \\ preserves predictions on other data}}
+    \pause
     \annotate[yshift=-0.5em]{below}{upw}{\small upweight $z$}
+    \pause
     \annotate[yshift=0.5em]{above,left}{prox}{\small proximity to $\tilde{\theta}$}
 
     \vspace{1.2cm}
@@ -445,7 +452,7 @@ x
     \end{center}
     \vspace{-0.3cm}
     \begin{center}
-        {\small PBRF with GNH and damping shows strong correlation with LOO retraining effects. \\ \citep{bae2022if}}
+        {\small PBRF shows strong correlation with LOO retraining effects. \\ \citep{bae2022if}}
     \end{center}
 \end{frame}
 
@@ -568,7 +575,6 @@ x
         \item \textbf{Feature perturbation:} modify attributes that propagate through structure
     \end{itemize}
 
-    \pause
     \vspace{0.5cm}
     We start with \textbf{edge edits in GNNs} --- the simplest structural perturbation, but one that the standard influence function framework cannot handle.
 
@@ -636,7 +642,9 @@ x
         \eqnmarkbox[teal]{total}{\mathcal{I}(e, f)} \;=\; \eqnmarkbox[blue]{pshift}{\mathcal{I}_{\text{param}}(e, f)} \;+\; \eqnmarkbox[red]{mprop}{\mathcal{I}_{\text{msg}}(e, f)}
     \end{equation}
     \annotate[yshift=1em]{above}{total}{\small total influence of edge $e$ on prediction $f$}
+    \pause
     \annotate[yshift=-1em]{below,left}{pshift}{\small 1. Parameter Shift: edge changes parameters}
+    \pause
     \annotate[yshift=-3em]{below,left}{mprop}{\small 2. Message Propagation: edge changes message passing}
 
 \end{frame}
@@ -652,10 +660,10 @@ x
     \end{equation}
     \annotate[yshift=1em]{above,left}{testg}{\small test gradient}
     \annotate[yshift=1em]{above}{invG}{\small damped GNH inverse}
+    \pause
     \annotate[yshift=-1em]{below, left}{deltaG}{\small training-gradient shift caused by removing edge $e$}
 
     \vspace{1.5cm}
-    \pause
     The last term replaces the single-point gradient $\nabla_\theta L(z)$: removing an edge changes \emph{every node's} gradient because message passing couples them.
 \end{frame}
 
