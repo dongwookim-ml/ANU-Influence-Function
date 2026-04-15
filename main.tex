@@ -295,24 +295,25 @@
     \end{center}
     \vspace{-0.3cm}
     \begin{center}
-        {\small Correlation between influence function estimates and actual LOO retraining effects (Logistic Regression).}
+        {\small Correlation between influence function estimates and actual LOO retraining effects \\ on \remph{Logistic Regression}.}
     \end{center}
 \end{frame}
 
-\begin{frame}{However ... }
-    \begin{center}
-        \includegraphics[height=0.6\textheight]{figures/correlation2.pdf}
-    \end{center}
-    \vspace{-0.3cm}
-    \begin{center}
-        {\small The newly added figure with CNN does not show strong correlation.}
-    \end{center}
+\begin{frame}{Will It Work for Modern Deep Networks?}
+    Three assumptions behind the classical derivation are \remph{violated} for deep networks:
+
+    \vspace{0.4cm}
+    \begin{itemize}\setlength\itemsep{2em}
+        \item \textbf{Non-convexity.} The loss landscape is non-convex --- the Hessian $H_{\hat\theta}$ is often \remph{not positive semi-definite} \citep{basu2021influence}.
+
+        \item \textbf{Non-convergence.} Networks are rarely trained to a true minimum (early stopping, finite epochs, optimizer noise) --- so $\nabla_\theta R(\hat\theta) \neq 0$, \remph{breaking the stationarity} condition in the derivation.
+    \end{itemize}
 \end{frame}
 
 
 \begin{frame}{Fix 1: Damping --- Addressing Non-Convexity and Non-Convergence}
     \citet{koh2017understanding}: form a \textbf{convex quadratic approximation} around the current parameters $\tilde{\theta}$ (not necessarily a minimum):
-
+x
     \begin{equation}
         \tilde{L}(z, \theta) = \eqnmarkbox[gray]{qconst}{L(z, \tilde{\theta})} + \eqnmarkbox[orange]{qlinear}{\nabla L(z, \tilde{\theta})^\top (\theta - \tilde{\theta})} + \frac{1}{2}(\theta - \tilde{\theta})^\top \eqnmarkbox[violet]{qdamp}{(H_{\tilde{\theta}} + \lambda I)} (\theta - \tilde{\theta})
     \end{equation}
@@ -330,7 +331,7 @@
 
 
 \begin{frame}{Fix 2: Gauss-Newton Hessian --- Addressing Efficiency}
-    The damped Hessian is still expensive: HVPs need second-order autograd.
+    Under mild assumptions, the Hessian can be approximated by the \textbf{Gauss-Newton Hessian (GNH)}, which is positive semi-definite and much cheaper to compute:
 
     \vspace{0.5cm}
     \textbf{Gauss-Newton Hessian (GNH):} a PSD approximation built from first-order quantities.
@@ -343,13 +344,20 @@
 
     \pause
     \vspace{2em}
-    \emph{Why it's the practical choice:}
     \begin{itemize}\setlength\itemsep{0.3em}
-        \item HVPs use only \remph{first-order} autograd (two backprops) --- cheaper and lower memory than second-order.
         \item $H_y$ is tiny ($c\times c$ for $c$ outputs, often diagonal for softmax + cross-entropy).
     \end{itemize}
 \end{frame}
 
+\begin{frame}{However ... }
+    \begin{center}
+        \includegraphics[height=0.6\textheight]{figures/correlation2.pdf}
+    \end{center}
+    \vspace{-0.3cm}
+    \begin{center}
+        {\small The newly added figure with CNN does not show strong correlation.}
+    \end{center}
+\end{frame}
 
 \begin{frame}{So, do Influence Functions Work in Practice?}
     \begin{center}
