@@ -757,7 +757,7 @@ x
     \end{center}
     \vspace{0.3cm}
     \begin{center}
-        {\small identify the single edge whose addition most degrades accuracy \citep{heo2025influence}}
+        {\small identifying the single edge whose addition most degrades accuracy \citep{heo2025influence}}
     \end{center}
 \end{frame}
 \begin{frame}{Potential Applications}
@@ -900,13 +900,16 @@ x
 \begin{frame}{Application: Selecting Synthetic Data for LLM SFT}
     \textbf{Task:} select complementary synthetic data to add on top of real data.
 
-    \vspace{0.5cm}
+    \vspace{0.2cm}
+    {\small Synthetic instruction/solution generation is now standard for LLM fine-tuning~\citep{wang2023selfinstruct}, \citep{xu2024wizardlm}, \citep{yu2024metamath}, but na\"ive scaling yields \remph{redundant examples}.}
+
+    \vspace{0.4cm}
     \textbf{Setup:}
     \begin{itemize}
         \item Model: Llama-3.1-8B
         \item Pool: MetaMathQA ($\approx$395K samples: GSM8K + MATH augmented)
         \item Target: GSM8K
-        \item Warmup on random 5\%; select $K = 19{,}750$ samples \emph{excluding warmup}
+        \item Warmup on random 5\%; select $K = 19{,}750$ samples for SFT
         \item 5 epochs SFT, 5 runs
     \end{itemize}
 \end{frame}
