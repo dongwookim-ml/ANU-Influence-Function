@@ -641,11 +641,11 @@ x
 
 \end{frame}
 
-\begin{frame}{1. Parameter Shift: Removing $e$ from Training}
+\begin{frame}{1. Parameter Shift: Removing Edge from Training}
     Influence of $e$ on $f$ via parameter update (analogous to standard IF):
     \vspace{2em}
     \begin{equation}
-        \mathcal{I}_{\text{param}}(e, f) = \frac{1}{N}\,
+        \mathcal{I}_{\text{param}}(e, f) = \frac{1}{n}\,
         \eqnmarkbox[orange]{testg}{\nabla_\theta f^\top}\,
         \eqnmarkbox[blue]{invG}{G^{-1}}\,
         \eqnmarkbox[red]{deltaG}{\sum_v \!\left(\nabla_\theta L(h^G_v) - \nabla_\theta L(h^{G_{-e}}_v)\right)}
