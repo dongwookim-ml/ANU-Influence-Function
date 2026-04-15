@@ -703,14 +703,19 @@ x
 
     \vspace{0.8em}
     \begin{itemize}\setlength\itemsep{0.8em}
-        \item \textbf{Over-squashing} \citep{alon2020bottleneck}: information from distant nodes must be compressed through \remph{narrow bottlenecks}. Long-range dependencies get lost.
-        \pause
         \item \textbf{Over-smoothing} \citep{li2018deeper}: as messages propagate, node representations become \remph{indistinguishable} --- every node converges to the same embedding.
+        \pause
+        \item \textbf{Over-squashing} \citep{alon2020bottleneck}: information from distant nodes must be compressed through \remph{narrow bottlenecks} --- long-range dependencies get lost.
+
     \end{itemize}
 
     \pause
     \vspace{1em}
-    \textbf{The dilemma:} adding edges between communities widens bottlenecks (helps over-squashing) but also mixes their representations (worsens over-smoothing). Whether a specific edge is beneficial or harmful is \emph{not obvious from topology alone}.
+    \textbf{The dilemma:} adding edges between communities widens bottlenecks (helps over-squashing) but also mixes their representations (worsens over-smoothing). \\
+    
+    \bigskip
+
+    $\Rightarrow$ Whether a specific edge is beneficial or harmful is \emph{not obvious from topology alone}.
 \end{frame}
 
 \begin{frame}{Edge Influence on a Barbell Graph}
@@ -726,7 +731,7 @@ x
 \end{frame}
 
 
-\begin{frame}{Influence Prediction}
+\begin{frame}{Influence Prediction on Three Evaluation Functions $f$}
     \begin{center}
         \includegraphics[width=0.8\linewidth]{figures/edge_influence.pdf}
     \end{center}
@@ -737,13 +742,13 @@ x
     \end{center}
 \end{frame}
 
-\begin{frame}{Adversarial Attack}
+\begin{frame}{Adversarial Edge Insertion Attack}
     \begin{center}
         \includegraphics[width=0.95\linewidth]{figures/attack.pdf}
     \end{center}
     \vspace{0.3cm}
     \begin{center}
-        {\small Adversarial edge insertion attack: \\identify the single edge whose addition most degrades accuracy \citep{heo2025influence}}
+        {\small identify the single edge whose addition most degrades accuracy \citep{heo2025influence}}
     \end{center}
 \end{frame}
 \begin{frame}{Potential Applications}
@@ -807,16 +812,18 @@ x
 \end{frame}
 
 \begin{frame}{Limitation of First-Order Influence}
-    Let $g_f = \nabla_\theta f(\theta^*)$, $g_S = \nabla_\theta \mathcal{L}_S(\theta^*)$, $H = \nabla_\theta^2 \mathcal{L}(\theta^*)$.
+    Let $S$ be a subset of data points $\{z_1, \dots, z_m\}$, $g_f = \nabla_\theta f(\theta^*)$.
 
     \vspace{0.3cm}
     First-order influence is \emph{linear} in the selected subset:
     \begin{equation}
-        f(\theta_\varepsilon) - f(\theta^*) \approx -\varepsilon \, g_f^\top H^{-1} g_S
+        f(\theta_\varepsilon) - f(\theta^*) \approx -\varepsilon \, g_f^\top H^{-1} g_S,
     \end{equation}
+    where $g_S = \sum_{i \in S} \nabla_\theta \ell(z_i, \theta^*)$, $H = \nabla_\theta^2 \mathcal{L}(\theta^*)$
 
+    \pause
     \vspace{0.5cm}
-    \textbf{Problem:} influence of a group $S = \{z_1, \dots, z_m\}$ is just the \remph{sum of individual influences}~\citep{koh2019accuracy}:
+    \textbf{Problem:} influence of a group $S$ is just the \remph{sum of individual influences}~\citep{koh2019accuracy}:
     \[
         \mathcal{I}(S) = \sum_{i \in S} \mathcal{I}(z_i)
     \]
