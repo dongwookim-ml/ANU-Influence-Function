@@ -14,7 +14,9 @@
 \usepackage{booktabs}
 \usepackage{bm}
 \usepackage{tikz}
+\usetikzlibrary{positioning}
 \usepackage{annotate-equations}
+\usepackage[normalem]{ulem}
 \usepackage[most]{tcolorbox}
 \usepackage[backend=bibtex, style=authoryear, natbib=true, maxcitenames=2]{biblatex}
 \addbibresource{references.bib}
@@ -302,10 +304,10 @@
     \begin{align*}
         \mathcal{I}_L(z, z_{\text{test}}) \;\;=\;\;
         \eqnmarkbox[purple]{prediff}{\frac{d\, L(z_{\text{test}}, \hat{\theta}_{\epsilon,z})}{d\epsilon}}
-        &\onslide<3->{{}= \eqnmarkbox[orange]{testgrad}{\nabla_\theta L(z_{\text{test}}, \hat{\theta})^\top}
+        &{\color<-2>{bg}{}= \eqnmarkbox[orange]{testgrad}{\nabla_\theta L(z_{\text{test}}, \hat{\theta})^\top}
         \cdot
         \eqnmarkbox[teal]{paramdiff}{\frac{d\hat{\theta}_{\epsilon,z}}{d\epsilon}}} \\[2.5em]
-        &\onslide<4->{{}= -\, \nabla_{\theta} L(z_{\text{test}}, \hat{\theta})^\top\, H_{\hat{\theta}}^{-1}\, \nabla_{\theta} L(z, \hat{\theta})}
+        &{\color<-3>{bg}{}= -\, \nabla_{\theta} L(z_{\text{test}}, \hat{\theta})^\top\, H_{\hat{\theta}}^{-1}\, \nabla_{\theta} L(z, \hat{\theta})}
     \end{align*}
     \annotate[yshift=0.8em]{above,left}{prediff}{\small change in prediction}
     \onslide<3->{%
@@ -443,20 +445,37 @@ x
 
 % Slide 10: The Real Question being Answered
 \begin{frame}{What are Influence Functions Actually Computing?}
-    Influence function is not entirely wrong!
+    Influence functions are \emph{not entirely wrong} --- just answering a different question.
 
-    \vspace{0.5cm}
+    \vspace{0.6cm}
+    \begin{center}
+        \begin{tcolorbox}[
+            enhanced, width=0.85\textwidth,
+            colback=blue!4, colframe=blue!40!black,
+            boxrule=0.5pt, arc=3pt,
+            left=10pt, right=10pt, top=6pt, bottom=6pt,
+        ]
+            \centering\itshape In which regime does the influence function work correctly?
+        \end{tcolorbox}
+    \end{center}
 
-    Then, in which regime, does influence function work correctly?
+    \pause
+    \vspace{0.4cm}
+    \begin{center}
+        \begin{tikzpicture}[every node/.style={font=\small}]
+            \node[draw=red!60!black, fill=red!5, rounded corners=3pt,
+                  inner sep=8pt, text width=3.6cm, align=center] (scratch)
+                  {\sout{retrain from scratch}\\ \textcolor{red!60!black}{\scriptsize $\theta^\star_{-z}$ from random init}};
+            \node[right=1.6cm of scratch, draw=teal!70!black, fill=teal!8,
+                  rounded corners=3pt, inner sep=8pt, text width=3.8cm, align=center] (warm)
+                  {\textbf{\textcolor{teal!50!black}{warm-start retrain}}\\ \scriptsize from current $\tilde{\theta}$, without $z$};
+            \draw[->, thick, blue!50!black] (scratch) -- (warm);
+        \end{tikzpicture}
+    \end{center}
 
-    \vspace{0.5cm}
-    
-    $\Rightarrow$ We \remph{do not} retrain the model from scratch when we compute influence functions. 
-    
-    \vspace{0.5cm}
-
-    Instead, we retrain a model from the current parameters $\tilde{\theta}$ without the target data point $z$.
-    
+    \pause
+    \vspace{0.2cm}
+    \centerline{\small Influence measures the \emph{local} effect of removing $z$ around $\tilde{\theta}$, not a global retrain.}
 \end{frame}
 
 
@@ -536,9 +555,22 @@ x
 \begin{frame}{The i.i.d.\ Assumption Breaks Down}
     Part 1 assumed training data are \emph{independent}:
 
-    \vspace{0.3cm}
+    \vspace{0.4cm}
     \begin{center}
-        Remove $z_i$ $\Rightarrow$ only $z_i$'s contribution changes.
+        \begin{tikzpicture}[every node/.style={font=\small}, node distance=6mm]
+            \node[draw=black!60, fill=black!5, rounded corners=2pt, inner sep=4pt] (z1) {$z_1$};
+            \node[draw=red!70!black, fill=red!15, rounded corners=2pt, inner sep=4pt, right=of z1] (z2) {$z_i$};
+            \node[draw=black!60, fill=black!5, rounded corners=2pt, inner sep=4pt, right=of z2] (z3) {$z_3$};
+            \node[draw=black!60, fill=black!5, rounded corners=2pt, inner sep=4pt, right=of z3] (z4) {$z_4$};
+            \node[right=4mm of z4, font=\Large] (arrow) {$\Longrightarrow$};
+            \node[draw=black!60, fill=black!5, rounded corners=2pt, inner sep=4pt, right=4mm of arrow] (y1) {$z_1$};
+            \node[draw=red!70!black, dashed, rounded corners=2pt, inner sep=4pt, right=of y1] (y2) {\textcolor{red!70!black}{\sout{$z_i$}}};
+            \node[draw=black!60, fill=black!5, rounded corners=2pt, inner sep=4pt, right=of y2] (y3) {$z_3$};
+            \node[draw=black!60, fill=black!5, rounded corners=2pt, inner sep=4pt, right=of y3] (y4) {$z_4$};
+        \end{tikzpicture}
+
+        \vspace{0.2cm}
+        {\small Remove $z_i$ $\Rightarrow$ \emph{only} $z_i$'s contribution changes.}
     \end{center}
 
     \pause
@@ -552,7 +584,6 @@ x
         \item \textbf{Groups:} correlated subsets of data (demographic slices, data sources)
     \end{itemize}
 
-    \pause
     \vspace{0.5cm}
     Modifying one element can \remph{cascade} through the structure, affecting many predictions simultaneously.
 \end{frame}
