@@ -15,6 +15,7 @@
 \usepackage{bm}
 \usepackage{tikz}
 \usepackage{annotate-equations}
+\usepackage[most]{tcolorbox}
 \usepackage[backend=bibtex, style=authoryear, natbib=true, maxcitenames=2]{biblatex}
 \addbibresource{references.bib}
 
@@ -24,6 +25,28 @@
 % \setbeamercovered{transparent=25}
 \renewcommand{\emph}[1]{\textit{\textcolor{blue}{#1}}}
 \newcommand{\remph}[1]{\textit{\textcolor{red}{#1}}}
+\newcommand{\tblue}[1]{\textcolor{blue}{#1}}
+
+% Intuition callout: tinted background, title straddles the top border
+\newtcolorbox{intuitionbox}[1][Intuition]{%
+  enhanced,
+  colback=red!5,
+  colframe=red!50!black,
+  boxrule=0.6pt,
+  arc=2pt,
+  left=8pt, right=8pt, top=8pt, bottom=8pt,
+  attach boxed title to top left={xshift=10pt, yshift=-\tcboxedtitleheight/2},
+  boxed title style={
+    colback=red!50!black,
+    colframe=red!50!black,
+    arc=1pt,
+    boxrule=0pt,
+    left=4pt, right=4pt, top=1pt, bottom=1pt,
+  },
+  coltitle=white,
+  fonttitle=\small\bfseries,
+  title={#1},
+}
 
 % Title information
 \title[Influence Functions]{Understanding Influence Functions: \\ From Edge Edits in Graphs to Group Influence in LLMs}
@@ -181,7 +204,7 @@
     Upweight a single training point $z$ by $\epsilon$:
 
     \begin{equation}
-        \hat{\theta}_{\epsilon, z} = \arg\min_{\theta} \eqnmarkbox[blue]{erm}{R(\theta)} + \eqnmarkbox[red]{upw}{\epsilon \, L(z, \theta)}
+        \textcolor{blue}{\hat{\theta}_{\epsilon, z}} = \arg\min_{\theta} \eqnmarkbox[blue]{erm}{R(\theta)} + \eqnmarkbox[red]{upw}{\epsilon \, L(z, \theta)}
     \end{equation}
     \annotate[yshift=-1em]{below,left}{erm}{\small empirical risk}
     \annotate[yshift=-1em]{below,right}{upw}{\small extra weight $\epsilon$ on $z$}
@@ -190,17 +213,19 @@
 
 % Slide 4a: Deriving the Influence Function (Part 1)
 \begin{frame}{Deriving the Influence Function (I)}
-    \textbf{Goal:} compute how $\hat{\theta}_{\epsilon, z}$ changes as we vary $\epsilon$, i.e.\ $\left.\dfrac{d\hat{\theta}_{\epsilon,z}}{d\epsilon}\right|_{\epsilon=0}$.
+    \textbf{\temporal<1>{Goal:}{\remph{Goal:}}{Goal:}} compute how $\hat{\theta}_{\epsilon, z}$ changes as we vary $\epsilon$, i.e.\ $\left.\dfrac{d\hat{\theta}_{\epsilon,z}}{d\epsilon}\right|_{\epsilon=0}$.
+
+    \pause
 
     \vspace{0.5cm}
-    \textbf{Step 1.} Stationarity condition --- $\hat{\theta}_{\epsilon, z}$ minimizes the upweighted objective:
+    \textbf{Step 1.} \temporal<2>{Stationarity condition}{\textcolor{blue}{Stationarity condition}}{Stationarity condition} --- $\hat{\theta}_{\epsilon, z}$ minimizes the upweighted objective:
     \begin{equation}
         \nabla_\theta R(\hat{\theta}_{\epsilon,z}) + \epsilon\,\nabla_\theta L(z, \hat{\theta}_{\epsilon,z}) = 0
     \end{equation}
 
     \pause
     \vspace{0.3cm}
-    \textbf{Step 2.} Taylor expansion of $\nabla_\theta R(\hat{\theta}_{\epsilon,z})$ around $\hat{\theta}$ (at $\epsilon=0$):
+    \textbf{Step 2.} \tblue{Taylor expansion} of $\nabla_\theta R(\hat{\theta}_{\epsilon,z})$ around \tblue{$\hat{\theta}$} (at $\epsilon=0$):
     \[
         \nabla_\theta R(\hat{\theta}_{\epsilon,z}) \approx \underbrace{\nabla_\theta R(\hat{\theta})}_{=\,0} + \nabla_\theta^2 R(\hat{\theta})(\hat{\theta}_{\epsilon,z} - \hat{\theta})
     \]
@@ -232,20 +257,27 @@
 \end{frame}
 
 \begin{frame}{Approximating Leave-One-Out}
-    Removing $z$ $\Leftrightarrow$ setting $\epsilon = -\frac{1}{n}$.
+    Removing $z$ $\Leftrightarrow$ setting $\epsilon = -\tfrac{1}{n}$ \quad{\small (downweighting by $1/n$ cancels $z$'s share of the mean).}
 
-    \vspace{0.3cm}
-    \textbf{First-order approximation} using the influence function $\mathcal{I}_\theta(z)$:
+    \pause
+    \vspace{0.4cm}
+    First order approximation with $\mathcal{I}_\theta(z) = -H_{\hat{\theta}}^{-1}\nabla_{\theta} L(z, \hat{\theta})$:
     \begin{equation}
-        \hat{\theta}_{-z} - \hat{\theta} \approx -\tfrac{1}{n}\,\mathcal{I}_\theta(z) = \frac{1}{n} H_{\hat{\theta}}^{-1} \nabla_{\theta} L(z, \hat{\theta})
+        \hat{\theta}_{-z} - \hat{\theta} \;\approx\; -\tfrac{1}{n}\,\mathcal{I}_\theta(z) \;=\; \tfrac{1}{n}\, H_{\hat{\theta}}^{-1} \nabla_{\theta} L(z, \hat{\theta})
+    \end{equation}
+
+    \pause
+    \vspace{0.2cm}
+    \centerline{$\Longrightarrow$\quad closed-form LOO approximation:}
+    \begin{equation}
+        \hat{\theta}_{-z} \;\approx\; \hat{\theta} + \tfrac{1}{n}\, H_{\hat{\theta}}^{-1} \nabla_{\theta} L(z, \hat{\theta})
     \end{equation}
 
     \pause
     \vspace{0.3cm}
-    Closed-form LOO approximation:
-    \begin{equation}
-        \hat{\theta}_{-z} \approx \hat{\theta} - \tfrac{1}{n}\,\mathcal{I}_\theta(z) = \hat{\theta} + \frac{1}{n} H_{\hat{\theta}}^{-1} \nabla_{\theta} L(z, \hat{\theta})
-    \end{equation}
+    \begin{intuitionbox}
+        If the gradient of $z$ \emph{aligns with the curvature} of the loss surface ($H^{-1}\nabla L$ is large), then $z$ has a \remph{large influence} on the parameters.
+    \end{intuitionbox}
 \end{frame}
 
 
@@ -256,19 +288,30 @@
     \pause
     
     \vspace{0.3cm}
-    \textbf{Chain rule} \citep{koh2017understanding}: remove point $\to$ change in parameters $\to$ change in prediction.
-    \vspace{0.5cm}
+    \textbf{Chain rule} \citep{koh2017understanding}:
+    
+    \tikz[baseline]{\node[draw=black!60, fill=black!5, rounded corners=2pt, inner sep=3pt, font=\small] {remove point};}
+    $\longrightarrow$
+    \tikz[baseline]{\node[draw=teal, fill=teal!10, rounded corners=2pt, inner sep=3pt, font=\small] {\textcolor{teal}{change in parameters}};}
+    $\longrightarrow$
+    \tikz[baseline]{\node[draw=purple, fill=purple!10, rounded corners=2pt, inner sep=3pt, font=\small] {\textcolor{purple}{change in prediction}};}
+    \vspace{1cm}
+
+    \pause
+
     \begin{align*}
         \mathcal{I}_L(z, z_{\text{test}}) \;\;=\;\;
         \eqnmarkbox[purple]{prediff}{\frac{d\, L(z_{\text{test}}, \hat{\theta}_{\epsilon,z})}{d\epsilon}}
-        &= \eqnmarkbox[orange]{testgrad}{\nabla_\theta L(z_{\text{test}}, \hat{\theta})^\top}
+        &\onslide<3->{{}= \eqnmarkbox[orange]{testgrad}{\nabla_\theta L(z_{\text{test}}, \hat{\theta})^\top}
         \cdot
-        \eqnmarkbox[teal]{paramdiff}{\frac{d\hat{\theta}_{\epsilon,z}}{d\epsilon}} \\[2.5em]
-        &= -\, \nabla_{\theta} L(z_{\text{test}}, \hat{\theta})^\top\, H_{\hat{\theta}}^{-1}\, \nabla_{\theta} L(z, \hat{\theta})
+        \eqnmarkbox[teal]{paramdiff}{\frac{d\hat{\theta}_{\epsilon,z}}{d\epsilon}}} \\[2.5em]
+        &\onslide<4->{{}= -\, \nabla_{\theta} L(z_{\text{test}}, \hat{\theta})^\top\, H_{\hat{\theta}}^{-1}\, \nabla_{\theta} L(z, \hat{\theta})}
     \end{align*}
     \annotate[yshift=0.8em]{above,left}{prediff}{\small change in prediction}
-    \annotate[yshift=1.3em]{above}{testgrad}{\small test gradient}
-    \annotate[yshift=-0.5em]{below,left}{paramdiff}{\small $\mathcal{I}_\theta(z)$: change in parameters}
+    \onslide<3->{%
+        \annotate[yshift=1.3em]{above}{testgrad}{\small test gradient}
+        \annotate[yshift=-0.5em]{below,left}{paramdiff}{\small $\mathcal{I}_\theta(z)$: change in parameters}%
+    }
 \end{frame}
 
 \begin{frame}{Generalizing to Any Evaluation Function}
