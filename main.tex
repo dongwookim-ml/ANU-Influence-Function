@@ -555,22 +555,13 @@ x
 \begin{frame}{The i.i.d.\ Assumption Breaks Down}
     Part 1 assumed training data are \emph{independent}:
 
-    \vspace{0.4cm}
+    \vspace{0.5cm}
     \begin{center}
-        \begin{tikzpicture}[every node/.style={font=\small}, node distance=6mm]
-            \node[draw=black!60, fill=black!5, rounded corners=2pt, inner sep=4pt] (z1) {$z_1$};
-            \node[draw=red!70!black, fill=red!15, rounded corners=2pt, inner sep=4pt, right=of z1] (z2) {$z_i$};
-            \node[draw=black!60, fill=black!5, rounded corners=2pt, inner sep=4pt, right=of z2] (z3) {$z_3$};
-            \node[draw=black!60, fill=black!5, rounded corners=2pt, inner sep=4pt, right=of z3] (z4) {$z_4$};
-            \node[right=4mm of z4, font=\Large] (arrow) {$\Longrightarrow$};
-            \node[draw=black!60, fill=black!5, rounded corners=2pt, inner sep=4pt, right=4mm of arrow] (y1) {$z_1$};
-            \node[draw=red!70!black, dashed, rounded corners=2pt, inner sep=4pt, right=of y1] (y2) {\textcolor{red!70!black}{\sout{$z_i$}}};
-            \node[draw=black!60, fill=black!5, rounded corners=2pt, inner sep=4pt, right=of y2] (y3) {$z_3$};
-            \node[draw=black!60, fill=black!5, rounded corners=2pt, inner sep=4pt, right=of y3] (y4) {$z_4$};
+        \begin{tikzpicture}[every node/.style={font=\small}]
+            \node[draw=red!70!black, fill=red!8, rounded corners=3pt, inner sep=7pt] (lhs) {Remove $z_i$};
+            \node[right=6mm of lhs, font=\Large] (arr) {$\Longrightarrow$};
+            \node[draw=teal!70!black, fill=teal!8, rounded corners=3pt, inner sep=7pt, right=6mm of arr] (rhs) {\emph{only} $z_i$'s contribution changes};
         \end{tikzpicture}
-
-        \vspace{0.2cm}
-        {\small Remove $z_i$ $\Rightarrow$ \emph{only} $z_i$'s contribution changes.}
     \end{center}
 
     \pause
@@ -630,29 +621,65 @@ x
         $h_v^{(l+1)} = \sigma\!\left(\sum_{u \in \mathcal{N}(v)} W^{(l)} h_u^{(l)}\right)$
 
         \vspace{0.5cm}
-        \textbf{Key insight:} removing node, edge, or subgraph changes:
-        \begin{itemize}
-            \item What $v$ ``sees'' (message)
-            \item How $\theta$ is learned (parameter)
-        \end{itemize}
+        \textbf{Problem:} Graph structure defines computational graph of NN.
     \end{column}
     \end{columns}
 \end{frame}
 
 \begin{frame}{What Can We Perturb in Structured Data?}
     Beyond removing a single data point $z$:
-
-    \vspace{0.5cm}
     \begin{itemize}
-        \item \textbf{Edge edits:} add or remove a connection $e = (u,v)$ in a graph
+        \item \textbf{Edge edits:} add or remove a connection $e = (u,v)$
         \item \textbf{Node removal:} remove a node and all its edges
-        \item \textbf{Group removal:} remove a correlated subset of data
-        \item \textbf{Feature perturbation:} modify attributes that propagate through structure
+        \item \textbf{Group removal:} remove a correlated subset of nodes
     \end{itemize}
 
-    \vspace{0.5cm}
-    We start with \textbf{edge edits in GNNs} --- the simplest structural perturbation, but one that the standard influence function framework cannot handle.
+    \vspace{0.2cm}
+    \begin{center}
+        \begin{tikzpicture}[
+            scale=0.55,
+            every node/.style={transform shape},
+            gnode/.style={circle, draw, thick, minimum size=6mm, font=\scriptsize, inner sep=0pt},
+        ]
+        % --- Node removal ---
+        \begin{scope}[xshift=0cm]
+            \node[gnode, fill=blue!20] (a1) at (1, 3.5) {$a$};
+            \node[gnode, fill=blue!20] (b1) at (1, 0.5) {$b$};
+            \node[gnode, draw=red!70!black, dashed, text=red!70!black] (v1) at (3, 2) {$v$};
+            \node[gnode, fill=blue!20] (c1) at (5, 3.5) {$c$};
+            \node[gnode, fill=gray!20] (d1) at (5, 0.5) {$d$};
+            \draw[thick, red!60!black, dashed] (v1) -- (a1);
+            \draw[thick, red!60!black, dashed] (v1) -- (b1);
+            \draw[thick, red!60!black, dashed] (v1) -- (c1);
+            \draw[thick, red!60!black, dashed] (v1) -- (d1);
+            \draw[thick] (a1) -- (b1);
+            \draw[thick] (c1) -- (d1);
+            \node[font=\small\bfseries, below=2mm] at (3, 0) {Node removal};
+        \end{scope}
 
+        % --- Group removal ---
+        \begin{scope}[xshift=8cm]
+            \node[gnode, draw=red!70!black, dashed, text=red!70!black] (a2) at (1, 3.5) {$a$};
+            \node[gnode, draw=red!70!black, dashed, text=red!70!black] (b2) at (1, 0.5) {$b$};
+            \node[gnode, fill=red!20] (v2) at (3, 2) {$v$};
+            \node[gnode, fill=blue!20] (c2) at (5, 3.5) {$c$};
+            \node[gnode, fill=gray!20] (d2) at (5, 0.5) {$d$};
+            \draw[thick, red!60!black, dashed] (v2) -- (a2);
+            \draw[thick, red!60!black, dashed] (v2) -- (b2);
+            \draw[thick] (v2) -- (c2);
+            \draw[thick] (v2) -- (d2);
+            \draw[thick, red!60!black, dashed] (a2) -- (b2);
+            \draw[thick] (c2) -- (d2);
+            % Group boundary
+            \draw[red!70!black, dashed, thick, rounded corners=4pt]
+                (0.2, -0.2) rectangle (1.8, 4.2);
+            \node[font=\small\bfseries, below=2mm] at (3, 0) {Group removal};
+        \end{scope}
+        \end{tikzpicture}
+    \end{center}
+
+    \vspace{0.1cm}
+    \centerline{\small We start with \textbf{edge edits} --- the simplest structural perturbation.}
 \end{frame}
 
 \begin{frame}{Why Edge Influence Is Hard}
@@ -691,10 +718,6 @@ x
     \end{column}
     \end{columns}
 
-    \pause
-    \vspace{0.8cm}
-    \centering
-    Prior work (GIF) only captures the first pathway $\Rightarrow$ poor correlation ($\sim$0.1).
 \end{frame}
 
 % \begin{frame}{Our Approach: Edge-Edit PBRF}
@@ -742,7 +765,7 @@ x
     The last term replaces the single-point gradient $\nabla_\theta L(z)$: removing an edge changes \emph{every node's} gradient because message passing couples them.
 \end{frame}
 
-\begin{frame}{2.Message Propagation: Direct Topology Effect}
+\begin{frame}{2. Message Propagation: Direct Topology Effect}
     Influence of $e$ on $f$ via inference-time message passing (no retraining):
     \vspace{2em}
     \begin{equation}
